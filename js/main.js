@@ -334,7 +334,7 @@
     // Accordion styling and progressive opening
     const accordionItems = document.querySelectorAll(".accordion-item");
     const icons = ["hobby", "location", "distance", "category"];
-    
+
     accordionItems.forEach((item, idx) => {
       styleAccordionItem(
         item,
@@ -349,7 +349,7 @@
       const elementTop = element.offsetTop - offset;
       window.scrollTo({
         top: elementTop,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     };
 
@@ -357,27 +357,33 @@
     const checkAndOpenNext = () => {
       const hobbyValue = hobbyInput?.value.trim();
       const categoryValue = categorySelect?.value;
-      const locationValue = document.getElementById("manualLocation")?.value.trim();
+      const locationValue = document
+        .getElementById("manualLocation")
+        ?.value.trim();
       const radiusValue = radiusInput?.value.trim();
       const indoorOutdoorValue = indoorOutdoor?.value;
 
       // Check hobby/category section (first accordion)
       const isHobbyComplete = hobbyValue || categoryValue;
-      
-      // Check location section (second accordion) 
+
+      // Check location section (second accordion)
       const isLocationComplete = userLocation || locationValue;
-      
+
       // Check distance section (third accordion)
       const isDistanceComplete = radiusValue;
-      
+
       // Check indoor/outdoor section (fourth accordion)
       const isIndoorOutdoorComplete = indoorOutdoorValue;
 
       // Open location accordion if hobby is complete
       if (isHobbyComplete && accordionItems[1]) {
-        const locationCollapse = accordionItems[1].querySelector('.accordion-collapse');
-        if (locationCollapse && !locationCollapse.classList.contains('show')) {
-          const bsCollapse = new bootstrap.Collapse(locationCollapse, { show: true });
+        const locationCollapse = accordionItems[1].querySelector(
+          ".accordion-collapse"
+        );
+        if (locationCollapse && !locationCollapse.classList.contains("show")) {
+          const bsCollapse = new bootstrap.Collapse(locationCollapse, {
+            show: true,
+          });
           // Scroll to location section after a short delay to allow accordion to open
           setTimeout(() => {
             scrollToElement(accordionItems[1]);
@@ -387,9 +393,13 @@
 
       // Open distance accordion if location is complete
       if (isLocationComplete && accordionItems[2]) {
-        const distanceCollapse = accordionItems[2].querySelector('.accordion-collapse');
-        if (distanceCollapse && !distanceCollapse.classList.contains('show')) {
-          const bsCollapse = new bootstrap.Collapse(distanceCollapse, { show: true });
+        const distanceCollapse = accordionItems[2].querySelector(
+          ".accordion-collapse"
+        );
+        if (distanceCollapse && !distanceCollapse.classList.contains("show")) {
+          const bsCollapse = new bootstrap.Collapse(distanceCollapse, {
+            show: true,
+          });
           // Scroll to distance section after a short delay
           setTimeout(() => {
             scrollToElement(accordionItems[2]);
@@ -399,9 +409,13 @@
 
       // Open indoor/outdoor accordion if distance is complete
       if (isDistanceComplete && accordionItems[3]) {
-        const categoryCollapse = accordionItems[3].querySelector('.accordion-collapse');
-        if (categoryCollapse && !categoryCollapse.classList.contains('show')) {
-          const bsCollapse = new bootstrap.Collapse(categoryCollapse, { show: true });
+        const categoryCollapse = accordionItems[3].querySelector(
+          ".accordion-collapse"
+        );
+        if (categoryCollapse && !categoryCollapse.classList.contains("show")) {
+          const bsCollapse = new bootstrap.Collapse(categoryCollapse, {
+            show: true,
+          });
           // Scroll to indoor/outdoor section after a short delay
           setTimeout(() => {
             scrollToElement(accordionItems[3]);
@@ -421,25 +435,25 @@
 
     // Add event listeners for progressive accordion opening
     if (hobbyInput) {
-      hobbyInput.addEventListener('input', checkAndOpenNext);
-      hobbyInput.addEventListener('change', checkAndOpenNext);
+      hobbyInput.addEventListener("input", checkAndOpenNext);
+      hobbyInput.addEventListener("change", checkAndOpenNext);
     }
     if (categorySelect) {
-      categorySelect.addEventListener('change', checkAndOpenNext);
+      categorySelect.addEventListener("change", checkAndOpenNext);
     }
     if (radiusInput) {
-      radiusInput.addEventListener('input', checkAndOpenNext);
-      radiusInput.addEventListener('change', checkAndOpenNext);
+      radiusInput.addEventListener("input", checkAndOpenNext);
+      radiusInput.addEventListener("change", checkAndOpenNext);
     }
     if (indoorOutdoor) {
-      indoorOutdoor.addEventListener('change', checkAndOpenNext);
+      indoorOutdoor.addEventListener("change", checkAndOpenNext);
     }
-    
+
     // Also check when manual location is entered
     const manualLocationInput = document.getElementById("manualLocation");
     if (manualLocationInput) {
-      manualLocationInput.addEventListener('input', checkAndOpenNext);
-      manualLocationInput.addEventListener('change', checkAndOpenNext);
+      manualLocationInput.addEventListener("input", checkAndOpenNext);
+      manualLocationInput.addEventListener("change", checkAndOpenNext);
     }
 
     // Helper to show validation errors
@@ -455,7 +469,9 @@
     // Perform the Places search
     const performSearch = ({ hobby, category, preference, radiusMiles }) => {
       if (!userLocation) {
-        alert("Please set your location first (either allow location access or enter manually).");
+        alert(
+          "Please set your location first (either allow location access or enter manually)."
+        );
         return;
       }
 
@@ -627,81 +643,83 @@
     }
 
     // Manual Location Handler - FIXED VERSION
-    document.getElementById("manualLocationBtn").addEventListener("click", () => {
-      const address = document.getElementById("manualLocation").value.trim();
-      const btn = document.getElementById("manualLocationBtn");
+    document
+      .getElementById("manualLocationBtn")
+      .addEventListener("click", () => {
+        const address = document.getElementById("manualLocation").value.trim();
+        const btn = document.getElementById("manualLocationBtn");
 
-      if (!address) {
-        alert("Please enter a location.");
-        return;
-      }
+        if (!address) {
+          alert("Please enter a location.");
+          return;
+        }
 
-      // Add loading state
-      const originalText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = "Setting location...";
+        // Add loading state
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Setting location...";
 
-      // Build Geocoding API request
-      const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-        address
-      )}&key=${GOOGLE_MAPS_API_KEY}`;
+        // Build Geocoding API request
+        const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=${GOOGLE_MAPS_API_KEY}`;
 
-      fetch(geocodeUrl)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.status === "OK") {
-            const location = data.results[0].geometry.location;
-            console.log("Manual location chosen:", location);
+        fetch(geocodeUrl)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "OK") {
+              const location = data.results[0].geometry.location;
+              console.log("Manual location chosen:", location);
 
-            // Update the global userLocation variable
-            userLocation = {
-              lat: location.lat,
-              lng: location.lng,
-            };
+              // Update the global userLocation variable
+              userLocation = {
+                lat: location.lat,
+                lng: location.lng,
+              };
 
-            // Center the map on the new location
-            map.setCenter(userLocation);
-            map.setZoom(12); // Adjust zoom level
+              // Center the map on the new location
+              map.setCenter(userLocation);
+              map.setZoom(12); // Adjust zoom level
 
-            // Remove old user marker if it exists
-            if (userMarker) {
-              userMarker.setMap(null);
-              // Remove from markers array
-              markers = markers.filter(marker => marker !== userMarker);
+              // Remove old user marker if it exists
+              if (userMarker) {
+                userMarker.setMap(null);
+                // Remove from markers array
+                markers = markers.filter((marker) => marker !== userMarker);
+              }
+
+              // Create new user marker at manual location
+              userMarker = new google.maps.Marker({
+                position: userLocation,
+                map: map,
+                title: "Your chosen location",
+                icon: {
+                  url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                },
+              });
+              markers.push(userMarker);
+
+              // Reload discover results for the new location
+              loadDiscoverResults(userLocation);
+
+              // Check if next accordion should open
+              checkAndOpenNext();
+
+              alert(`Location set to: ${data.results[0].formatted_address}`);
+            } else {
+              alert("Could not find that location. Please try again.");
+              console.error("Geocoding error:", data);
             }
-
-            // Create new user marker at manual location
-            userMarker = new google.maps.Marker({
-              position: userLocation,
-              map: map,
-              title: "Your chosen location",
-              icon: {
-                url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-              },
-            });
-            markers.push(userMarker);
-
-            // Reload discover results for the new location
-            loadDiscoverResults(userLocation);
-
-            // Check if next accordion should open
-            checkAndOpenNext();
-
-            alert(`Location set to: ${data.results[0].formatted_address}`);
-          } else {
-            alert("Could not find that location. Please try again.");
-            console.error("Geocoding error:", data);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching geocode:", error);
-          alert("Something went wrong. Please try again.");
-        })
-        .finally(() => {
-          // Restore button state
-          btn.disabled = false;
-          btn.textContent = originalText;
-        });
-    });
+          })
+          .catch((error) => {
+            console.error("Error fetching geocode:", error);
+            alert("Something went wrong. Please try again.");
+          })
+          .finally(() => {
+            // Restore button state
+            btn.disabled = false;
+            btn.textContent = originalText;
+          });
+      });
   });
 })();
