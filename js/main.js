@@ -1,6 +1,45 @@
 (() => {
   "use strict";
 
+  window.addEventListener("load", () => {
+    // Check if user already made a choice
+    const locationChoice = localStorage.getItem("locationChoice");
+
+    if (!locationChoice) {
+      setTimeout(() => {
+        document.getElementById("locationPopup").classList.remove("hidden");
+      }, 1000);
+    }
+  });
+
+  // Handle Allow
+  document.getElementById("allowLocation").addEventListener("click", () => {
+    localStorage.setItem("locationChoice", "allowed");
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log("User's location:", position.coords);
+          // Use position.coords.latitude & position.coords.longitude
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+
+    document.getElementById("locationPopup").classList.add("hidden");
+  });
+
+  // Handle Deny
+  document.getElementById("denyLocation").addEventListener("click", () => {
+    localStorage.setItem("locationChoice", "denied");
+    document.getElementById("locationPopup").classList.add("hidden");
+    alert("Some features may not work without location access.");
+  });
+
   // Constants
   const MAX_DISCOVER = 12;
   const INTERESTS = [
@@ -12,6 +51,7 @@
     "Relaxing",
   ];
   const BASE_PURPLE = "#6a1b9a";
+  const GOOGLE_MAPS_API_KEY = "AIzaSyC_BOqOK7jLCjPYx5Me_p1rCxQZtFHDNPw";
 
   // Globals
   let map;
@@ -21,7 +61,7 @@
   let activeInfoWindow = null;
   let discoverResults = [];
 
-  //  Utilities
+  // Utilities
   const clearMarkers = () => {
     markers.forEach((m) => m.setMap(null));
     markers = [];
@@ -210,9 +250,6 @@
             : null,
         tags: mapPlaceToTags(place),
       }));
-        if (place && place.vicinity) {
-          addressP.textContent = place.vicinity;
-        }
 
       renderDiscoverResults();
     });
@@ -235,10 +272,11 @@
           map.setCenter(userLocation);
 
           if (!userLocation) {
-  alert("Location access denied. Please enable location to search nearby clubs.");
-  userLocation = { lat: 50.266, lng: -5.052 }; // fallback (Cornwall)
-}
-
+            alert(
+              "Location access denied. Please enable location to search nearby clubs."
+            );
+            userLocation = { lat: 50.266, lng: -5.052 }; // fallback (Cornwall)
+          }
 
           userMarker = new google.maps.Marker({
             position: userLocation,
@@ -251,6 +289,9 @@
           markers.push(userMarker);
 
           loadDiscoverResults(userLocation);
+
+          // Check if next accordion should open after geolocation
+          checkAndOpenNext();
         },
         () => {
           console.warn("Geolocation failed; using fallback.");
@@ -290,9 +331,11 @@
       window.scrollTo({ top: 0, behavior: "smooth" })
     );
 
-    // Accordion styling
-    document.querySelectorAll(".accordion-item").forEach((item, idx) => {
-      const icons = ["hobby", "location", "distance", "category"];
+    // Accordion styling and progressive opening
+    const accordionItems = document.querySelectorAll(".accordion-item");
+    const icons = ["hobby", "location", "distance", "category"];
+    
+    accordionItems.forEach((item, idx) => {
       styleAccordionItem(
         item,
         BASE_PURPLE,
@@ -300,6 +343,72 @@
         `assets/images/icons/${icons[idx]}.png`
       );
     });
+
+    // Function to smoothly scroll to an element
+    const scrollToElement = (element, offset = 100) => {
+      const elementTop = element.offsetTop - offset;
+      window.scrollTo({
+        top: elementTop,
+        behavior: 'smooth'
+      });
+    };
+
+    // Function to check if accordion section is complete and open next
+    const checkAndOpenNext = () => {
+      const hobbyValue = hobbyInput?.value.trim();
+      const categoryValue = categorySelect?.value;
+      const locationValue = document.getElementById("manualLocation")?.value.trim();
+      const radiusValue = radiusInput?.value.trim();
+      const indoorOutdoorValue = indoorOutdoor?.value;
+
+      // Check hobby/category section (first accordion)
+      const isHobbyComplete = hobbyValue || categoryValue;
+      
+      // Check location section (second accordion) 
+      const isLocationComplete = userLocation || locationValue;
+      
+      // Check distance section (third accordion)
+      const isDistanceComplete = radiusValue;
+      
+      // Check indoor/outdoor section (fourth accordion)
+      const isIndoorOutdoorComplete = indoorOutdoorValue;
+
+      // Open location accordion if hobby is complete
+      if (isHobbyComplete && accordionItems[1]) {
+        const locationCollapse = accordionItems[1].querySelector('.accordion-collapse');
+        if (locationCollapse && !locationCollapse.classList.contains('show')) {
+          const bsCollapse = new bootstrap.Collapse(locationCollapse, { show: true });
+          // Scroll to location section after a short delay to allow accordion to open
+          setTimeout(() => {
+            scrollToElement(accordionItems[1]);
+          }, 300);
+        }
+      }
+
+      // Open distance accordion if location is complete
+      if (isLocationComplete && accordionItems[2]) {
+        const distanceCollapse = accordionItems[2].querySelector('.accordion-collapse');
+        if (distanceCollapse && !distanceCollapse.classList.contains('show')) {
+          const bsCollapse = new bootstrap.Collapse(distanceCollapse, { show: true });
+          // Scroll to distance section after a short delay
+          setTimeout(() => {
+            scrollToElement(accordionItems[2]);
+          }, 300);
+        }
+      }
+
+      // Open indoor/outdoor accordion if distance is complete
+      if (isDistanceComplete && accordionItems[3]) {
+        const categoryCollapse = accordionItems[3].querySelector('.accordion-collapse');
+        if (categoryCollapse && !categoryCollapse.classList.contains('show')) {
+          const bsCollapse = new bootstrap.Collapse(categoryCollapse, { show: true });
+          // Scroll to indoor/outdoor section after a short delay
+          setTimeout(() => {
+            scrollToElement(accordionItems[3]);
+          }, 300);
+        }
+      }
+    };
 
     // Form Logic
     const hobbyInput = document.getElementById("hobbyInput");
@@ -310,10 +419,32 @@
     const hobbyContainer = document.getElementById("hobby-results");
     const searchForm = document.getElementById("searchForm");
 
+    // Add event listeners for progressive accordion opening
+    if (hobbyInput) {
+      hobbyInput.addEventListener('input', checkAndOpenNext);
+      hobbyInput.addEventListener('change', checkAndOpenNext);
+    }
+    if (categorySelect) {
+      categorySelect.addEventListener('change', checkAndOpenNext);
+    }
+    if (radiusInput) {
+      radiusInput.addEventListener('input', checkAndOpenNext);
+      radiusInput.addEventListener('change', checkAndOpenNext);
+    }
+    if (indoorOutdoor) {
+      indoorOutdoor.addEventListener('change', checkAndOpenNext);
+    }
+    
+    // Also check when manual location is entered
+    const manualLocationInput = document.getElementById("manualLocation");
+    if (manualLocationInput) {
+      manualLocationInput.addEventListener('input', checkAndOpenNext);
+      manualLocationInput.addEventListener('change', checkAndOpenNext);
+    }
+
     // Helper to show validation errors
     const showError = (input, message) => {
       if (!input) return;
-      // Avoid duplicating error messages
       if (input.parentElement.querySelector(".error-message")) return;
       const err = document.createElement("div");
       err.className = "error-message text-danger small mt-1";
@@ -324,7 +455,7 @@
     // Perform the Places search
     const performSearch = ({ hobby, category, preference, radiusMiles }) => {
       if (!userLocation) {
-        alert("User location not available yet.");
+        alert("Please set your location first (either allow location access or enter manually).");
         return;
       }
 
@@ -333,12 +464,13 @@
 
       if (hobby) {
         keyword = hobby;
-        keyword +=
-          preference === "indoor"
-            ? " indoor club"
-            : preference === "outdoor"
-            ? " outdoor club"
-            : " club";
+        if (preference === "indoor") {
+          keyword += " indoor club";
+        } else if (preference === "outdoor") {
+          keyword += " outdoor club";
+        } else {
+          keyword += " club";
+        }
       } else {
         const categoryKeywords = {
           sports: "sports club",
@@ -386,11 +518,11 @@
 
         // Render grid & carousel max 12
         results.slice(0, 12).forEach((place, idx) => {
-          // Card
           const photoUrl =
             place.photos && place.photos.length
               ? place.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 })
               : "https://placekittens.com/300/200";
+
           const col = document.createElement("div");
           col.className = "col";
           const card = document.createElement("div");
@@ -417,7 +549,6 @@
           col.appendChild(card);
           hobbyContainer.appendChild(col);
 
-          // Marker
           const marker = new google.maps.Marker({
             map,
             position: place.geometry.location,
@@ -426,7 +557,6 @@
           });
           markers.push(marker);
 
-          // InfoWindow
           marker.addListener("click", () => {
             if (activeInfoWindow) activeInfoWindow.close();
             const contentString = `<div><h6>${place.name}</h6><p>${
@@ -440,7 +570,6 @@
             activeInfoWindow.open(map, marker);
           });
 
-          // Carousel
           const activeClass = idx === 0 ? "active" : "";
           carouselInner.innerHTML += `<div class="carousel-item ${activeClass}"><div class="d-flex flex-column flex-sm-row align-items-center"><img src="${photoUrl}" class="d-block me-sm-3 mb-3 mb-sm-0" style="max-width:300px;height:auto;border-radius:8px;"><div><h5>${
             place.name
@@ -451,7 +580,6 @@
           )}" target="_blank">View on Google Maps</a></div></div></div>`;
         });
 
-        // Show carousel
         const carouselElement = document.getElementById(
           "carouselExampleControls"
         );
@@ -463,7 +591,6 @@
     if (searchForm) {
       searchForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        // Remove old errors
         document
           .querySelectorAll(".error-message")
           .forEach((el) => el.remove());
@@ -498,5 +625,83 @@
         performSearch({ hobby, category, preference, radiusMiles });
       });
     }
+
+    // Manual Location Handler - FIXED VERSION
+    document.getElementById("manualLocationBtn").addEventListener("click", () => {
+      const address = document.getElementById("manualLocation").value.trim();
+      const btn = document.getElementById("manualLocationBtn");
+
+      if (!address) {
+        alert("Please enter a location.");
+        return;
+      }
+
+      // Add loading state
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Setting location...";
+
+      // Build Geocoding API request
+      const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+        address
+      )}&key=${GOOGLE_MAPS_API_KEY}`;
+
+      fetch(geocodeUrl)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.status === "OK") {
+            const location = data.results[0].geometry.location;
+            console.log("Manual location chosen:", location);
+
+            // Update the global userLocation variable
+            userLocation = {
+              lat: location.lat,
+              lng: location.lng,
+            };
+
+            // Center the map on the new location
+            map.setCenter(userLocation);
+            map.setZoom(12); // Adjust zoom level
+
+            // Remove old user marker if it exists
+            if (userMarker) {
+              userMarker.setMap(null);
+              // Remove from markers array
+              markers = markers.filter(marker => marker !== userMarker);
+            }
+
+            // Create new user marker at manual location
+            userMarker = new google.maps.Marker({
+              position: userLocation,
+              map: map,
+              title: "Your chosen location",
+              icon: {
+                url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+              },
+            });
+            markers.push(userMarker);
+
+            // Reload discover results for the new location
+            loadDiscoverResults(userLocation);
+
+            // Check if next accordion should open
+            checkAndOpenNext();
+
+            alert(`Location set to: ${data.results[0].formatted_address}`);
+          } else {
+            alert("Could not find that location. Please try again.");
+            console.error("Geocoding error:", data);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching geocode:", error);
+          alert("Something went wrong. Please try again.");
+        })
+        .finally(() => {
+          // Restore button state
+          btn.disabled = false;
+          btn.textContent = originalText;
+        });
+    });
   });
 })();

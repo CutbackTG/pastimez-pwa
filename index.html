@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en-US">
 
+<!-- Location Popup -->
+<div id="locationPopup" class="popup-overlay hidden">
+  <div class="popup-box">
+    <h2>Enable Location Access</h2>
+    <p>For the best experience, allow us to access your location so we can find hobby clubs near you.</p>
+    <div class="popup-actions">
+      <button id="allowLocation">Allow</button>
+      <button id="denyLocation">Not Now</button>
+    </div>
+  </div>
+</div>
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -92,6 +104,26 @@
 
     <form id="searchForm" class="mb-4">
       <div class="accordion" id="mainAccordion">
+
+        <!-- Step X: Choose Location -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="headingChooseLocation">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapseChooseLocation" aria-expanded="false" aria-controls="collapseChooseLocation">
+              If you allowed geolocation then the map will use your current location,
+              alternatively you can choose a location
+            </button>
+          </h2>
+          <div id="collapseChooseLocation" class="accordion-collapse collapse" aria-labelledby="headingChooseLocation">
+            <div class="accordion-body">
+              <label for="manualLocation" class="form-label">Enter a town, city, or postcode:</label>
+              <input type="text" id="manualLocation" name="manualLocation" class="form-control"
+                placeholder="e.g. Truro, Cornwall or TR1 1AA">
+              <button type="button" id="manualLocationBtn" class="btn btn-secondary mt-2">Use this location</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Step 1: Hobby Input -->
         <div class="accordion-item">
           <h2 class="accordion-header" id="headingHobby">
