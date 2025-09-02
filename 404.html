@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - Hobby Club Finder</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-purple: #6a1b9a;
+            --light-purple: #9c27b0;
+            --dark-purple: #4a148c;
+            --gradient-bg: linear-gradient(135deg, var(--primary-purple) 0%, var(--light-purple) 100%);
+        }
+
+        body {
+            background: var(--gradient-bg);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .error-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .error-content {
+            text-align: center;
+            color: white;
+            z-index: 2;
+            position: relative;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .error-number {
+            font-size: clamp(8rem, 15vw, 12rem);
+            font-weight: 900;
+            line-height: 0.8;
+            background: linear-gradient(45deg, #fff, #e1bee7, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 20px rgba(255,255,255,0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        .error-title {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .error-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hobby-icons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .hobby-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .hobby-icon:nth-child(1) { animation-delay: 0s; }
+        .hobby-icon:nth-child(2) { animation-delay: 0.5s; }
+        .hobby-icon:nth-child(3) { animation-delay: 1s; }
+        .hobby-icon:nth-child(4) { animation-delay: 1.5s; }
+        .hobby-icon:nth-child(5) { animation-delay: 2s; }
+        .hobby-icon:nth-child(6) { animation-delay: 2.5s; }
+
+        .hobby-icon:hover {
+            transform: scale(1.2) translateY(-5px);
+            background: rgba(255,255,255,0.3);
+            box-shadow: 0 10px 30px rgba(255,255,255,0.2);
+        }
+
+        .btn-home {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.5);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            margin: 1rem 0.5rem;
+        }
+
+        .btn-home:hover {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255,255,255,0.2);
+        }
+
+        .floating-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            animation: floatShapes 15s infinite linear;
+        }
+
+        .shape:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 60%;
+            left: 80%;
+            animation-delay: 5s;
+        }
+
+        .shape:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            top: 40%;
+            left: 5%;
+            animation-delay: 10s;
+        }
+
+        .shape:nth-child(4) {
+            width: 100px;
+            height: 100px;
+            top: 80%;
+            left: 70%;
+            animation-delay: 2s;
+        }
+
+        .suggestions {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 500px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .suggestion-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .suggestion-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .suggestion-list li:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-list a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-list a:hover {
+            opacity: 1;
+            padding-left: 10px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 20px rgba(255,255,255,0.3);
+            }
+            to {
+                text-shadow: 0 0 40px rgba(255,255,255,0.6);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(5deg);
+            }
+        }
+
+        @keyframes floatShapes {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hobby-icons {
+                gap: 1rem;
+            }
+            
+            .hobby-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .suggestions {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="container-fluid error-container">
+        <div class="error-content">
+            <div class="error-number">404</div>
+            <h1 class="error-title">Oops! Page Not Found</h1>
+            <p class="error-subtitle">
+                It looks like this hobby club has gone on an adventure without us! 
+                The page you're looking for seems to have wandered off to explore new activities.
+            </p>
+
+            <div class="hobby-icons">
+                <div class="hobby-icon" title="Creative Arts">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <div class="hobby-icon" title="Technology">
+                    <i class="fas fa-code"></i>
+                </div>
+                <div class="hobby-icon" title="Sports & Fitness">
+                    <i class="fas fa-running"></i>
+                </div>
+                <div class="hobby-icon" title="Nature & Outdoors">
+                    <i class="fas fa-tree"></i>
+                </div>
+                <div class="hobby-icon" title="Music">
+                    <i class="fas fa-music"></i>
+                </div>
+                <div class="hobby-icon" title="Social">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+
+            <div class="suggestions">
+                <h4 class="mb-3">
+                    <i class="fas fa-compass me-2"></i>
+                    Let's get you back on track!
+                </h4>
+                <ul class="suggestion-list">
+                    <li><a href="/"><i class="fas fa-home me-2"></i>Return to Homepage</a></li>
+                    <li><a href="/discover"><i class="fas fa-search me-2"></i>Discover Local Clubs</a></li>
+                    <li><a href="/search"><i class="fas fa-filter me-2"></i>Search by Interest</a></li>
+                    <li><a href="/about"><i class="fas fa-info-circle me-2"></i>Learn More About Us</a></li>
+                </ul>
+            </div>
+
+            <div class="mt-4">
+                <a href="/" class="btn-home">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Home
+                </a>
+                <a href="javascript:history.back()" class="btn-home">
+                    <i class="fas fa-undo"></i>
+                    Go Back
+                </a>
+            </div>
+
+            <p class="mt-4 opacity-75">
+                <small>
+                    <i class="fas fa-lightbulb me-1"></i>
+                    Pro tip: Use our search feature to find hobby clubs near you!
+                </small>
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add some interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate hobby icons on hover
+            const hobbyIcons = document.querySelectorAll('.hobby-icon');
+            
+            hobbyIcons.forEach(icon => {
+                icon.addEventListener('mouseenter', function() {
+                    this.style.animationPlayState = 'paused';
+                });
+                
+                icon.addEventListener('mouseleave', function() {
+                    this.style.animationPlayState = 'running';
+                });
+            });
+
+            // Add click handlers for suggestion links
+            const suggestionLinks = document.querySelectorAll('.suggestion-list a');
+            suggestionLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // Check if it's an actual page (not javascript:)
+                    if (this.href && !this.href.startsWith('javascript:')) {
+                        // Add a subtle loading effect
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+                    }
+                });
+            });
+
+            // Create additional floating shapes dynamically
+            const shapesContainer = document.querySelector('.floating-shapes');
+            
+            function createShape() {
+                const shape = document.createElement('div');
+                shape.className = 'shape';
+                
+                const size = Math.random() * 80 + 40; // 40-120px
+                const left = Math.random() * 100; // 0-100%
+                const delay = Math.random() * 15; // 0-15s
+                
+                shape.style.width = size + 'px';
+                shape.style.height = size + 'px';
+                shape.style.left = left + '%';
+                shape.style.animationDelay = delay + 's';
+                shape.style.top = '100%';
+                
+                shapesContainer.appendChild(shape);
+                
+                // Remove the shape after animation completes
+                setTimeout(() => {
+                    if (shape.parentNode) {
+                        shape.parentNode.removeChild(shape);
+                    }
+                }, 15000 + delay * 1000);
+            }
+
+            // Create new shapes periodically
+            setInterval(createShape, 3000);
+
+                }
+            );
+        ;
+    </script>
+</body>
+</html>

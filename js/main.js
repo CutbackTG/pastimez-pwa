@@ -48,7 +48,7 @@
     "Physical",
     "Social",
     "Nature",
-    "Relaxing",
+    "Relaxing"
   ];
   const BASE_PURPLE = "#6a1b9a";
   const GOOGLE_MAPS_API_KEY = "AIzaSyC_BOqOK7jLCjPYx5Me_p1rCxQZtFHDNPw";
