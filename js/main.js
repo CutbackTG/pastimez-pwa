@@ -117,20 +117,6 @@
       input.style.borderRadius = "0.3rem";
       input.style.boxSizing = "border-box";
     }
-
-    let img = item.querySelector(".accordion-image");
-    if (!img) {
-      img = document.createElement("img");
-      img.className = "accordion-image";
-      img.style.width = "60px";
-      img.style.height = "60px";
-      img.style.objectFit = "cover";
-      img.style.marginRight = "10px";
-      img.style.borderRadius = "8px";
-      body.insertBefore(img, label);
-    }
-    img.src = imgUrl;
-    img.alt = "Icon";
   };
 
   // Discover Helpers
@@ -216,12 +202,12 @@
   };
 
   const loadDiscoverResults = (location) => {
-    const service = new google.maps.places.PlacesService(map);
+    const service = new google.maps.places.Place(map);
     const request = { location, radius: 16093, keyword: "hobby club" }; // 10 miles
 
     service.nearbySearch(request, (results, status) => {
       if (
-        status !== google.maps.places.PlacesServiceStatus.OK ||
+        status !== google.maps.places.Place.OK ||
         !results.length
       ) {
         console.warn("No default results found.");
@@ -278,7 +264,15 @@
             userLocation = { lat: 50.266, lng: -5.052 }; // fallback (Cornwall)
           }
 
-          userMarker = new google.maps.Marker({
+          const userMarker = new google.maps.marker.AdvancedMarkerElement({
+            position: userLocation,
+            map,
+            title: "You are here",
+            icon: {
+              url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+            },
+          });
+          markers.push(userMarker); ({
             position: userLocation,
             map,
             title: "You are here",
@@ -290,8 +284,6 @@
 
           loadDiscoverResults(userLocation);
 
-          // Check if next accordion should open after geolocation
-          checkAndOpenNext();
         },
         () => {
           console.warn("Geolocation failed; using fallback.");
@@ -499,7 +491,7 @@
         keyword = categoryKeywords[category] || "hobby club";
       }
 
-      const service = new google.maps.places.PlacesService(map);
+      const service = new google.maps.places.Place(map);
       const request = { location: userLocation, radius: radiusMeters, keyword };
 
       // Clear previous UI
@@ -509,7 +501,7 @@
 
       service.nearbySearch(request, (results, status) => {
         if (
-          status !== google.maps.places.PlacesServiceStatus.OK ||
+          status !== google.maps.places.Place.OK ||
           !results.length
         ) {
           alert("No results found.");
@@ -565,7 +557,7 @@
           col.appendChild(card);
           hobbyContainer.appendChild(col);
 
-          const marker = new google.maps.Marker({
+          const marker = new google.maps.marker.AdvancedMarkerElement({
             map,
             position: place.geometry.location,
             title: place.name,
@@ -689,7 +681,7 @@
               }
 
               // Create new user marker at manual location
-              userMarker = new google.maps.Marker({
+              userMarker = new google.maps.marker.AdvancedMarkerElement({
                 position: userLocation,
                 map: map,
                 title: "Your chosen location",
