@@ -170,6 +170,10 @@ W3C HTML & CSS Tests All Passed.
 ![w3c html test passed](assets/images/readme-images/w3c-html-check.png)
 ![css w3c test passed](assets/images/readme-images/css-w3c-check.png)
 
+However, JSLint has defeated me, despite trying to re-write my main.js file many times with lint-compliant syntax the closest I could get to being lint-free was with still 10 remaining errors without losing full functionality of the site web application.
+
+![Jslint has defeated me](assets/images/readme-images/jslint-has-defeated-me.png)
+
 **Accessibility - Lighthouse Rating**
 
 <img src= assets/images/readme-images/lighthouse-rating.png  alt ="pastimez lighthouse rating" width= 800>
