@@ -286,6 +286,10 @@ This third bug was caused by our earlier fix for clearing our map markers after 
 This last bug unfortunately remains in place and i sonly "solved" due to me removing the code for the optional toggles for sorting, the bug would cause all of the user results to clear upon clicking any of the toggles and a new search query would be needed to regenerate the results. 
 I realise now after pondering this problem for a while that it may just need the filtered results to be re-called for each button pending the results they have generated but that's a thought for the site's development stage.
 
+After completing work to try and mitigate any remaining console errors, I updated our use of Google markers to the new Advanced Markers, however this threw up many new errors and did not present a stable build for our search query system and so I have rolled back to using the Markers API which is still supported and receives updates with the following console update cautions evident.
+
+![Remaining console cautions for markers update](assets/images/readme-images/console-error-free.png)
+
 # Deployment
 
 **Installation**
