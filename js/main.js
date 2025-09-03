@@ -7,38 +7,53 @@
 
     if (!locationChoice) {
       setTimeout(() => {
-        document.getElementById("locationPopup").classList.remove("hidden");
+        const popup = document.getElementById("locationPopup");
+        if (popup) {
+          popup.classList.remove("hidden");
+        }
       }, 1000);
     }
   });
 
-  // Handle Allow
-  document.getElementById("allowLocation").addEventListener("click", () => {
-    localStorage.setItem("locationChoice", "allowed");
+  // Handle Allow - Add null checks
+  const allowBtn = document.getElementById("allowLocation");
+  if (allowBtn) {
+    allowBtn.addEventListener("click", () => {
+      localStorage.setItem("locationChoice", "allowed");
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log("User's location:", position.coords);
-          // Use position.coords.latitude & position.coords.longitude
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
-        }
-      );
-    } else {
-      alert("Geolocation is not supported by your browser.");
-    }
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log("User's location:", position.coords);
+            // Use position.coords.latitude & position.coords.longitude
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+          }
+        );
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
 
-    document.getElementById("locationPopup").classList.add("hidden");
-  });
+      const popup = document.getElementById("locationPopup");
+      if (popup) {
+        popup.classList.add("hidden");
+      }
+    });
+  }
 
-  // Handle Deny
-  document.getElementById("denyLocation").addEventListener("click", () => {
-    localStorage.setItem("locationChoice", "denied");
-    document.getElementById("locationPopup").classList.add("hidden");
-    alert("Some features may not work without location access.");
-  });
+  // Handle Deny - Add null checks
+  const denyBtn = document.getElementById("denyLocation");
+  if (denyBtn) {
+    denyBtn.addEventListener("click", () => {
+      localStorage.setItem("locationChoice", "denied");
+      const popup = document.getElementById("locationPopup");
+      if (popup) {
+        popup.classList.add("hidden");
+      }
+      alert("Some features may not work without location access.");
+    });
+  }
 
   // Constants
   const MAX_DISCOVER = 12;
@@ -85,37 +100,41 @@
     const button = item.querySelector(".accordion-button");
     const body = item.querySelector(".accordion-body");
 
-    button.style.backgroundColor = bgColor;
-    button.style.color = textColor;
-    button.style.fontWeight = "700";
-    button.style.border = "none";
-    button.style.borderRadius = "0.5rem";
-
-    body.style.display = "flex";
-    body.style.alignItems = "center";
-    body.style.gap = "20px";
-    body.style.padding = "1rem";
-    body.style.borderRadius = "0 0 0.5rem 0.5rem";
-    body.style.backgroundColor = lightenHexColor(bgColor, 0.7);
-
-    const label = body.querySelector("label");
-    const input = body.querySelector("input, select");
-
-    if (label) {
-      label.style.flex = "1 0 0%";
-      label.style.marginBottom = "0";
-      label.style.color = textColor;
-      label.style.fontWeight = "600";
+    if (button) {
+      button.style.backgroundColor = bgColor;
+      button.style.color = textColor;
+      button.style.fontWeight = "700";
+      button.style.border = "none";
+      button.style.borderRadius = "0.5rem";
     }
 
-    if (input) {
-      input.style.flex = "1 0 70%";
-      input.style.maxWidth = "400px";
-      input.style.width = "100%";
-      input.style.padding = "0.5rem";
-      input.style.border = `1px solid ${textColor}`;
-      input.style.borderRadius = "0.3rem";
-      input.style.boxSizing = "border-box";
+    if (body) {
+      body.style.display = "flex";
+      body.style.alignItems = "center";
+      body.style.gap = "20px";
+      body.style.padding = "1rem";
+      body.style.borderRadius = "0 0 0.5rem 0.5rem";
+      body.style.backgroundColor = lightenHexColor(bgColor, 0.7);
+
+      const label = body.querySelector("label");
+      const input = body.querySelector("input, select");
+
+      if (label) {
+        label.style.flex = "1 0 0%";
+        label.style.marginBottom = "0";
+        label.style.color = textColor;
+        label.style.fontWeight = "600";
+      }
+
+      if (input) {
+        input.style.flex = "1 0 70%";
+        input.style.maxWidth = "400px";
+        input.style.width = "100%";
+        input.style.padding = "0.5rem";
+        input.style.border = `1px solid ${textColor}`;
+        input.style.borderRadius = "0.3rem";
+        input.style.boxSizing = "border-box";
+      }
     }
   };
 
@@ -202,15 +221,24 @@
   };
 
   const loadDiscoverResults = (location) => {
-    const service = new google.maps.places.Place(map);
-    const request = { location, radius: 16093, keyword: "hobby club" }; // 10 miles
+    if (!google || !google.maps || !google.maps.places) {
+      console.error("Google Maps Places API not loaded");
+      return;
+    }
+
+    const service = new google.maps.places.PlacesService(map);
+    const request = { 
+      location: new google.maps.LatLng(location.lat, location.lng), 
+      radius: 16093, 
+      keyword: "hobby club" 
+    };
 
     service.nearbySearch(request, (results, status) => {
       if (
-        status !== google.maps.places.Place.OK ||
-        !results.length
+        status !== google.maps.places.PlacesServiceStatus.OK ||
+        !results || !results.length
       ) {
-        console.warn("No default results found.");
+        console.warn("No default results found:", status);
         return;
       }
 
@@ -246,6 +274,7 @@
     map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 50.266, lng: -5.052 },
       zoom: 10,
+      mapId: "DEMO_MAP_ID" // Required for AdvancedMarkerElement
     });
 
     if (navigator.geolocation) {
@@ -257,13 +286,6 @@
           };
           map.setCenter(userLocation);
 
-          if (!userLocation) {
-            alert(
-              "Location access denied. Please enable location to search nearby clubs."
-            );
-            userLocation = { lat: 50.266, lng: -5.052 }; // fallback (Cornwall)
-          }
-
           // Create a DOM node for the marker
           const markerContent = document.createElement("img");
           markerContent.src = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
@@ -271,34 +293,27 @@
           markerContent.style.height = "32px";
 
           // Create the marker using AdvancedMarkerElement
-          const userMarker = new google.maps.marker.AdvancedMarkerElement({
-          position: userLocation, // your lat/lng object
-          map: map,               // your map object
-          title: "You are here",
-          content: markerContent, // pass the DOM Node here
-          });
-
-
-          markers.push(userMarker); ({
+          userMarker = new google.maps.marker.AdvancedMarkerElement({
             position: userLocation,
-            map,
+            map: map,
             title: "You are here",
-            icon: {
-              url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-            },
+            content: markerContent,
           });
+
           markers.push(userMarker);
 
           loadDiscoverResults(userLocation);
-
         },
-        () => {
-          console.warn("Geolocation failed; using fallback.");
-          loadDiscoverResults({ lat: 50.266, lng: -5.052 });
+        (error) => {
+          console.warn("Geolocation failed; using fallback.", error);
+          userLocation = { lat: 50.266, lng: -5.052 };
+          loadDiscoverResults(userLocation);
         }
       );
     } else {
-      loadDiscoverResults({ lat: 50.266, lng: -5.052 });
+      console.warn("Geolocation not supported");
+      userLocation = { lat: 50.266, lng: -5.052 };
+      loadDiscoverResults(userLocation);
     }
   };
 
@@ -323,12 +338,14 @@
 
     // Back to top
     const backToTopBtn = document.getElementById("backToTopBtn");
-    window.addEventListener("scroll", () => {
-      backToTopBtn.style.display = window.scrollY > 100 ? "block" : "none";
-    });
-    backToTopBtn.addEventListener("click", () =>
-      window.scrollTo({ top: 0, behavior: "smooth" })
-    );
+    if (backToTopBtn) {
+      window.addEventListener("scroll", () => {
+        backToTopBtn.style.display = window.scrollY > 100 ? "block" : "none";
+      });
+      backToTopBtn.addEventListener("click", () =>
+        window.scrollTo({ top: 0, behavior: "smooth" })
+      );
+    }
 
     // Accordion styling and progressive opening
     const accordionItems = document.querySelectorAll(".accordion-item");
@@ -354,6 +371,11 @@
 
     // Function to check if accordion section is complete and open next
     const checkAndOpenNext = () => {
+      const hobbyInput = document.getElementById("hobbyInput");
+      const categorySelect = document.getElementById("categorySelect");
+      const radiusInput = document.getElementById("radius");
+      const indoorOutdoor = document.getElementById("indoorOutdoor");
+
       const hobbyValue = hobbyInput?.value.trim();
       const categoryValue = categorySelect?.value;
       const locationValue = document
@@ -474,6 +496,11 @@
         return;
       }
 
+      if (!google || !google.maps || !google.maps.places) {
+        alert("Google Maps is not loaded yet. Please try again in a moment.");
+        return;
+      }
+
       const radiusMeters = radiusMiles * 1609.34;
       let keyword = "";
 
@@ -498,18 +525,22 @@
         keyword = categoryKeywords[category] || "hobby club";
       }
 
-      const service = new google.maps.places.Place(map);
-      const request = { location: userLocation, radius: radiusMeters, keyword };
+      const service = new google.maps.places.PlacesService(map);
+      const request = { 
+        location: new google.maps.LatLng(userLocation.lat, userLocation.lng), 
+        radius: radiusMeters, 
+        keyword 
+      };
 
       // Clear previous UI
       clearMarkers();
-      carouselInner.innerHTML = "";
-      hobbyContainer.innerHTML = "";
+      if (carouselInner) carouselInner.innerHTML = "";
+      if (hobbyContainer) hobbyContainer.innerHTML = "";
 
       service.nearbySearch(request, (results, status) => {
         if (
-          status !== google.maps.places.Place.OK ||
-          !results.length
+          status !== google.maps.places.PlacesServiceStatus.OK ||
+          !results || !results.length
         ) {
           alert("No results found.");
           return;
@@ -536,39 +567,47 @@
           const photoUrl =
             place.photos && place.photos.length
               ? place.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 })
-              : "https://placekittens.com/300/200";
+              : "https://via.placeholder.com/300x200?text=No+Image";
 
-          const col = document.createElement("div");
-          col.className = "col";
-          const card = document.createElement("div");
-          card.className = "card h-100 shadow-sm";
-          const img = document.createElement("img");
-          img.src = photoUrl;
-          img.alt = place.name;
-          img.className = "card-img-top";
-          img.style.objectFit = "cover";
-          img.style.height = "200px";
-          const body = document.createElement("div");
-          body.className = "card-body";
-          const title = document.createElement("h5");
-          title.className = "card-title";
-          title.textContent = place.name;
-          const addressP = document.createElement("p");
-          addressP.className = "card-text";
-          addressP.textContent =
-            place.vicinity || place.formatted_address || "";
-          body.appendChild(title);
-          body.appendChild(addressP);
-          card.appendChild(img);
-          card.appendChild(body);
-          col.appendChild(card);
-          hobbyContainer.appendChild(col);
+          if (hobbyContainer) {
+            const col = document.createElement("div");
+            col.className = "col";
+            const card = document.createElement("div");
+            card.className = "card h-100 shadow-sm";
+            const img = document.createElement("img");
+            img.src = photoUrl;
+            img.alt = place.name;
+            img.className = "card-img-top";
+            img.style.objectFit = "cover";
+            img.style.height = "200px";
+            const body = document.createElement("div");
+            body.className = "card-body";
+            const title = document.createElement("h5");
+            title.className = "card-title";
+            title.textContent = place.name;
+            const addressP = document.createElement("p");
+            addressP.className = "card-text";
+            addressP.textContent =
+              place.vicinity || place.formatted_address || "";
+            body.appendChild(title);
+            body.appendChild(addressP);
+            card.appendChild(img);
+            card.appendChild(body);
+            col.appendChild(card);
+            hobbyContainer.appendChild(col);
+          }
+
+          // Create marker with proper AdvancedMarkerElement
+          const markerContent = document.createElement("img");
+          markerContent.src = "http://maps.google.com/mapfiles/ms/icons/red-dot.png";
+          markerContent.style.width = "32px";
+          markerContent.style.height = "32px";
 
           const marker = new google.maps.marker.AdvancedMarkerElement({
             map,
             position: place.geometry.location,
             title: place.name,
-            icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+            content: markerContent,
           });
           markers.push(marker);
 
@@ -585,19 +624,19 @@
             activeInfoWindow.open(map, marker);
           });
 
-          const activeClass = idx === 0 ? "active" : "";
-          carouselInner.innerHTML += `<div class="carousel-item ${activeClass}"><div class="d-flex flex-column flex-sm-row align-items-center"><img src="${photoUrl}" class="d-block me-sm-3 mb-3 mb-sm-0" style="max-width:300px;height:auto;border-radius:8px;"><div><h5>${
-            place.name
-          }</h5><p>${
-            place.vicinity || ""
-          }</p><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            place.name
-          )}" target="_blank">View on Google Maps</a></div></div></div>`;
+          if (carouselInner) {
+            const activeClass = idx === 0 ? "active" : "";
+            carouselInner.innerHTML += `<div class="carousel-item ${activeClass}"><div class="d-flex flex-column flex-sm-row align-items-center"><img src="${photoUrl}" class="d-block me-sm-3 mb-3 mb-sm-0" style="max-width:300px;height:auto;border-radius:8px;"><div><h5>${
+              place.name
+            }</h5><p>${
+              place.vicinity || ""
+            }</p><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              place.name
+            )}" target="_blank">View on Google Maps</a></div></div></div>`;
+          }
         });
 
-        const carouselElement = document.getElementById(
-          "carouselExampleControls"
-        );
+        const carouselElement = document.getElementById("carouselExampleControls");
         if (carouselElement) carouselElement.style.display = "block";
       });
     };
@@ -610,28 +649,28 @@
           .querySelectorAll(".error-message")
           .forEach((el) => el.remove());
 
-        const hobby = hobbyInput.value.trim();
-        const category = categorySelect.value;
-        const preference = indoorOutdoor.value;
-        const radiusVal = radiusInput.value.trim();
+        const hobby = hobbyInput?.value.trim() || "";
+        const category = categorySelect?.value || "";
+        const preference = indoorOutdoor?.value || "";
+        const radiusVal = radiusInput?.value.trim() || "";
 
         let valid = true;
 
         if (!hobby && !category) {
-          showError(hobbyInput, "Enter a hobby or select a category.");
-          showError(categorySelect, "Enter a hobby or select a category.");
+          if (hobbyInput) showError(hobbyInput, "Enter a hobby or select a category.");
+          if (categorySelect) showError(categorySelect, "Enter a hobby or select a category.");
           valid = false;
         }
         if (!preference) {
-          showError(indoorOutdoor, "Select indoor or outdoor preference.");
+          if (indoorOutdoor) showError(indoorOutdoor, "Select indoor or outdoor preference.");
           valid = false;
         }
-        const radiusMiles = radiusVal ? Number(radiusVal) : 100;
+        const radiusMiles = radiusVal ? Number(radiusVal) : 10;
         if (
           radiusVal &&
           (isNaN(radiusMiles) || radiusMiles < 1 || radiusMiles > 100)
         ) {
-          showError(radiusInput, "Distance must be between 1 and 100 miles.");
+          if (radiusInput) showError(radiusInput, "Distance must be between 1 and 100 miles.");
           valid = false;
         }
 
@@ -642,11 +681,11 @@
     }
 
     // Manual Location Handler - FIXED VERSION
-    document
-      .getElementById("manualLocationBtn")
-      .addEventListener("click", () => {
-        const address = document.getElementById("manualLocation").value.trim();
-        const btn = document.getElementById("manualLocationBtn");
+    const manualLocationBtn = document.getElementById("manualLocationBtn");
+    if (manualLocationBtn) {
+      manualLocationBtn.addEventListener("click", () => {
+        const manualLocationInput = document.getElementById("manualLocation");
+        const address = manualLocationInput?.value.trim();
 
         if (!address) {
           alert("Please enter a location.");
@@ -654,9 +693,9 @@
         }
 
         // Add loading state
-        const originalText = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = "Setting location...";
+        const originalText = manualLocationBtn.textContent;
+        manualLocationBtn.disabled = true;
+        manualLocationBtn.textContent = "Setting location...";
 
         // Build Geocoding API request
         const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -666,7 +705,7 @@
         fetch(geocodeUrl)
           .then((response) => response.json())
           .then((data) => {
-            if (data.status === "OK") {
+            if (data.status === "OK" && data.results && data.results.length > 0) {
               const location = data.results[0].geometry.location;
               console.log("Manual location chosen:", location);
 
@@ -688,13 +727,14 @@
               }
 
               // Create new user marker at manual location
-              userMarker = new google.maps.marker.AdvancedMarkerElement({
+              userMarker = new google.maps.Marker({
                 position: userLocation,
                 map: map,
                 title: "Your chosen location",
                 icon: {
-                  url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                },
+                  url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                  scaledSize: new google.maps.Size(32, 32)
+                }
               });
               markers.push(userMarker);
 
@@ -716,9 +756,10 @@
           })
           .finally(() => {
             // Restore button state
-            btn.disabled = false;
-            btn.textContent = originalText;
+            manualLocationBtn.disabled = false;
+            manualLocationBtn.textContent = originalText;
           });
       });
+    }
   });
 })();
