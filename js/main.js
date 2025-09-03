@@ -264,14 +264,21 @@
             userLocation = { lat: 50.266, lng: -5.052 }; // fallback (Cornwall)
           }
 
+          // Create a DOM node for the marker
+          const markerContent = document.createElement("img");
+          markerContent.src = "http://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+          markerContent.style.width = "32px";
+          markerContent.style.height = "32px";
+
+          // Create the marker using AdvancedMarkerElement
           const userMarker = new google.maps.marker.AdvancedMarkerElement({
-            position: userLocation,
-            map,
-            title: "You are here",
-            icon: {
-              url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-            },
+          position: userLocation, // your lat/lng object
+          map: map,               // your map object
+          title: "You are here",
+          content: markerContent, // pass the DOM Node here
           });
+
+
           markers.push(userMarker); ({
             position: userLocation,
             map,
