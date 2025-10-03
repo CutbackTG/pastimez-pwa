@@ -847,4 +847,53 @@
     // Expose initMap to global scope
     window.initMap = initMap;
 
+    // Location logic
+document.addEventListener("DOMContentLoaded", () => {
+  const allowBtn = document.getElementById("allowLocation");
+  const denyBtn = document.getElementById("denyLocation");
+  const popup = document.getElementById("locationPopup");
+
+  // Show the popup on load (you already have HTML for this)
+  popup.classList.remove("hidden");
+
+  allowBtn.addEventListener("click", () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+
+          console.log("User position:", lat, lng);
+
+          // Call your map initializer with coords
+          if (typeof initMap === "function") {
+            initMap(lat, lng);
+          }
+
+          popup.classList.add("hidden"); // close popup
+        },
+        (err) => {
+          alert("Error getting location: " + err.message);
+          console.error(err);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      alert("Geolocation is not supported on this device.");
+    }
+  });
+
+  denyBtn.addEventListener("click", () => {
+    popup.classList.add("hidden");
+    // fallback: initMap without coords, or use default center
+    if (typeof initMap === "function") {
+      initMap();
+    }
+  });
+});
+
 }());
