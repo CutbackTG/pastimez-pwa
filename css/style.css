@@ -840,3 +840,17 @@ button[type="submit"]:hover,
     margin-top: 0;
   }
 }
+
+#resultsCarousel .carousel-item > div {
+  background: #fff;
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.carousel-result-content h5 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

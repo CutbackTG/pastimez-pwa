@@ -576,7 +576,7 @@
         markers.push(marker);
     }
 
-    function appendCarouselSlide(place, photoUrl, index) {
+    function appendCarouselSlide(place, photoUrl, index, distanceMiles) {
         var carouselInner = getElement("carouselInner");
         var item;
         var wrapper;
@@ -613,6 +613,12 @@
         address = document.createElement("p");
         address.textContent = place.vicinity || place.formatted_address || "";
 
+        var distance = document.createElement("p");
+        distance.textContent = distanceMiles + " miles away";
+        distance.style.fontWeight = "600";
+        distance.style.color = "#6a1b9a";
+        distance.style.marginBottom = "8px";
+
         link = document.createElement("a");
         link.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
         link.target = "_blank";
@@ -622,6 +628,7 @@
         imageWrap.appendChild(img);
         content.appendChild(title);
         content.appendChild(address);
+        content.appendChild(distance);
         content.appendChild(link);
 
         wrapper.appendChild(imageWrap);
@@ -686,8 +693,12 @@
                     ? place.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 })
                     : "https://via.placeholder.com/300x200?text=No+Image";
 
+                var distanceMiles = (
+                    safeComputeDistance(userLatLng, place.geometry.location) / 1609.34
+                    ).toFixed(1);
+
                 createResultMarker(place);
-                appendCarouselSlide(place, photoUrl, index);
+                appendCarouselSlide(place, photoUrl, index, distanceMiles);
             });
 
             if (resultsWrapper) {
