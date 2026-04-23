@@ -1,10 +1,26 @@
 /* ========================================
-   Base / Reset
+   Reset / Base
 ======================================== */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+:root {
+  --purple: #6a1b9a;
+  --purple-dark: #53157a;
+  --purple-light: #efe3f7;
+  --purple-soft: #f7f1fb;
+  --text: #2f2140;
+  --text-muted: #6f6182;
+  --white: #ffffff;
+  --border: #d8c7e6;
+  --shadow: 0 10px 30px rgba(106, 27, 154, 0.12);
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --max-app-width: 760px;
 }
 
 html {
@@ -14,10 +30,8 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
-  color: #6a1b9a;
+  background: linear-gradient(180deg, #faf7fd 0%, #ffffff 180px);
+  color: var(--text);
   font-family: Arial, sans-serif;
   line-height: 1.5;
 }
@@ -32,18 +46,26 @@ img {
 }
 
 /* ========================================
-   Theme helpers
+   App width / layout
 ======================================== */
-.text-purple {
-  color: #6a1b9a !important;
+main,
+.main-content,
+.page-shell,
+.app-shell {
+  width: min(100%, var(--max-app-width));
+  margin: 0 auto;
+  padding: 0 16px 32px;
 }
 
-.space {
-  height: 80px;
+/* Fallback if your HTML doesn't use these wrappers */
+body > *:not(.network-banner):not(script):not(style) {
+  width: min(100%, calc(var(--max-app-width) + 32px));
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ========================================
-   PWA Banner / Install UI
+   PWA banner / install button
 ======================================== */
 .network-banner {
   position: sticky;
@@ -52,7 +74,8 @@ img {
   width: 100%;
   padding: 0.85rem 1rem;
   text-align: center;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.95rem;
   background: #fff3cd;
   color: #5c4400;
   border-bottom: 1px solid #f0d98c;
@@ -62,19 +85,19 @@ img {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.75rem 1rem 0;
+  padding: 0.75rem 1rem 0.5rem;
 }
 
 .install-btn {
   border: none;
   border-radius: 999px;
-  padding: 0.85rem 1.2rem;
-  font-size: 1rem;
+  padding: 0.9rem 1.25rem;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  background: #6a1b9a;
-  color: #ffffff;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  background: var(--purple);
+  color: var(--white);
+  box-shadow: 0 8px 20px rgba(106, 27, 154, 0.2);
   transition: transform 0.15s ease, background-color 0.2s ease;
 }
 
@@ -91,13 +114,22 @@ img {
    Navbar
 ======================================== */
 .navbar {
-  border-bottom: 3px solid #6a1b9a;
+  width: min(100%, var(--max-app-width));
+  margin: 0 auto;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(106, 27, 154, 0.12);
+  background: transparent;
+}
+
+.text-purple {
+  color: var(--purple) !important;
 }
 
 #pastimez-logo {
-  width: 200px;
-  max-width: 300px;
-  height: auto;
+  width: min(100%, 360px);
+  max-height: 110px;
+  object-fit: contain;
+  margin: 0 auto;
 }
 
 #nav-toggle:checked ~ nav {
@@ -106,11 +138,11 @@ img {
 
 #menu {
   margin: 0;
-  padding: 0 1rem;
-  list-style-type: none;
-  font-size: 1.2rem;
-  letter-spacing: 4px;
-  color: #6a1b9a;
+  padding: 0 0.5rem;
+  list-style: none;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--purple);
 }
 
 #menu > li {
@@ -118,35 +150,61 @@ img {
 }
 
 .nav-toggle-label {
-  font-size: 6rem;
-  color: #6a1b9a;
+  font-size: 1.8rem;
+  color: var(--purple);
   cursor: pointer;
 }
 
 /* ========================================
-   Intro / Headings
+   Hero / opening
 ======================================== */
 .opening {
+  width: min(100%, var(--max-app-width));
+  margin: 14px auto 18px;
+  padding: 18px 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* If your opening contains a big hero image */
+.opening img,
+.hero img,
+.carousel-item img {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+/* If your opening contains a giant text block */
+.opening h1,
+.opening h2,
+.opening p,
+.hero-text,
+.hero-copy {
   max-width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
-  border: 4px solid #6a1b9a;
-  background: #6a1b9a;
-  color: #ffffff;
-  font-weight: 800;
 }
 
 .heading-2 {
-  padding: 20px;
-  align-self: center;
+  margin: 18px 0 10px;
+  padding: 0;
   text-align: center;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  line-height: 1.15;
+  color: var(--purple);
 }
 
 /* ========================================
-   Carousel
+   Carousel / hero controls
 ======================================== */
 .carousel-hobbies {
   width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
 }
 
 .static-carousel-indicators {
@@ -154,44 +212,60 @@ img {
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-top: 1rem;
-  background-color: #6a1b9a;
+  margin-top: 12px;
+  padding: 10px;
+  background-color: transparent;
 }
 
 .carousel-control-prev-icon,
 .carousel-control-next-icon {
-  background-color: #6a1b9a;
+  background-color: rgba(106, 27, 154, 0.85);
+  border-radius: 999px;
 }
 
 /* ========================================
-   Search / Forms / Accordion
+   Search section as app card
 ======================================== */
-.searchForm {
-  margin-bottom: 20px;
-  padding: 20px;
-}
-
+.searchForm,
 .user-search {
-  padding-top: 20px;
+  width: min(100%, var(--max-app-width));
+  margin: 0 auto 20px;
+  padding: 0;
 }
 
 #mainAccordion {
   width: 100%;
-  max-width: 100%;
-  margin: 10px auto;
-  background-color: #ffffff;
-  color: #ffffff;
-  font-size: 1.2rem;
+  margin: 0 auto;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 1rem;
 }
 
 .accordion-item {
-  display: flex;
-  flex-direction: column;
   width: 100%;
-  max-width: 98%;
-  margin: 10px auto;
+  margin: 0 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background-color: #6a0dad;
+  background: var(--white);
+}
+
+.accordion-button {
+  min-height: 56px;
+  padding: 1rem 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--purple);
+  background: var(--purple-soft);
+  box-shadow: none;
+}
+
+.accordion-button:not(.collapsed) {
+  color: var(--white);
+  background: var(--purple);
 }
 
 .accordion-button:hover {
@@ -199,162 +273,287 @@ img {
   color: #ffffff;
 }
 
-#find-hobby-accordion input#hobbyInput {
-  flex: 1 1 auto;
+.accordion-body {
+  padding: 1rem;
+  background: #fbf8fe;
+}
+
+#find-hobby-accordion input#hobbyInput,
+input[type="text"],
+input[type="search"],
+select {
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  padding: 0.5rem;
-  border: 1px solid #020202;
-  border-radius: 0.3rem;
+  min-height: 48px;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid #cdb7df;
+  border-radius: 12px;
+  background: #ffffff;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+#find-hobby-accordion input#hobbyInput:focus,
+input[type="text"]:focus,
+input[type="search"]:focus,
+select:focus {
+  outline: 2px solid rgba(106, 27, 154, 0.18);
+  border-color: var(--purple);
 }
 
 .form-label {
-  color: #000000;
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+  font-weight: 700;
 }
 
 .error-message {
-  margin-top: 0.25rem;
+  margin-top: 0.35rem;
   font-size: 0.875rem;
   color: #dc3545;
 }
 
 /* ========================================
-   Interest tags
+   Search tags / chips
 ======================================== */
+#interest-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 #interest-tags .tag {
-  padding: 6px 12px;
-  border: 1px solid #aaa;
-  border-radius: 20px;
+  padding: 10px 14px;
+  border: 1px solid #ccb3e2;
+  border-radius: 999px;
+  background: #ffffff;
   cursor: pointer;
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
 #interest-tags .tag.active {
-  background-color: #007bff;
+  background-color: var(--purple);
   color: #ffffff;
-  border-color: #007bff;
+  border-color: var(--purple);
 }
 
 /* ========================================
-   Map
+   Primary action button
+======================================== */
+.btn-dark.btn-sm,
+button[type="submit"],
+#findClubsBtn,
+.find-clubs-btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 48px;
+  padding: 0.8rem 1.2rem;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--purple);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 8px 18px rgba(106, 27, 154, 0.2);
+}
+
+.btn-dark.btn-sm:hover,
+.btn-dark.btn-sm:focus,
+button[type="submit"]:hover,
+#findClubsBtn:hover,
+.find-clubs-btn:hover {
+  background-color: var(--purple-dark);
+}
+
+.search-submit-wrap,
+.cta-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+/* ========================================
+   Map card
 ======================================== */
 .map-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 10px;
-  border: 2px solid #6a1b9a;
-  background-color: #6a1b9a;
+  width: min(100%, var(--max-app-width));
+  margin: 0 auto 20px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow);
 }
 
 #map {
   width: 100%;
-  height: 500px;
+  height: 320px;
   border: 0;
+  border-radius: 16px;
 }
 
 /* ========================================
    Results
 ======================================== */
 #hobby-results {
+  width: min(100%, var(--max-app-width));
+  margin: 0 auto;
   transition: opacity 0.4s ease;
 }
 
 .result-card {
   display: flex;
   gap: 1rem;
-  align-items: flex-start;
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 1rem;
-  border: 1px solid #6a1b9a;
-  border-radius: 8px;
-  background: rgba(240, 240, 240, 0.5);
-  box-shadow: 0 2px 6px rgb(0 0 0 / 10%);
-  transition: transform 0.2s ease-in-out;
+  align-items: stretch;
+  margin: 0 auto 16px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(106, 27, 154, 0.08);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .result-card:hover {
-  transform: scale(1.01);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(106, 27, 154, 0.14);
 }
 
 .image-wrapper {
   position: relative;
-  flex-shrink: 0;
-  width: 300px;
-  height: 200px;
+  flex: 0 0 120px;
+  width: 120px;
+  height: 120px;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 16px;
 }
 
 .result-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
 }
 
 .content-wrapper {
   flex: 1 1 auto;
-  max-width: 60%;
+  max-width: none;
 }
 
 .category-badge {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  margin-bottom: 0.45rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: var(--purple-light);
+  color: var(--purple);
+  font-size: 0.75rem;
+  font-weight: 700;
   text-transform: capitalize;
 }
 
 .result-title {
-  margin-bottom: 0.25rem;
-  font-size: 1.25rem;
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
   font-weight: 700;
+  color: var(--text);
 }
 
 .result-description {
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
-  color: #000000;
+  margin: 0 0 0.75rem;
+  font-size: 0.92rem;
+  color: var(--text-muted);
 }
 
 /* ========================================
-   Buttons
+   Popup / location prompt
 ======================================== */
-.btn-dark.btn-sm {
-  padding: 0.25rem 0.6rem;
-  font-size: 0.85rem;
-  background-color: #6a1b9a;
-  border-color: #000000;
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(32, 18, 48, 0.55);
 }
 
-.btn-dark.btn-sm:hover,
-.btn-dark.btn-sm:focus {
-  background-color: #222222;
-  border-color: #222222;
+.popup-box {
+  width: min(100%, 420px);
+  padding: 1.5rem;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+}
+
+.popup-box h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.4rem;
+  color: var(--purple);
+}
+
+.popup-box p {
+  margin: 0 0 1.2rem;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.popup-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.popup-actions button {
+  min-height: 46px;
+  padding: 0.7rem 1.1rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#allowLocation {
+  background: #4caf50;
+  color: white;
+}
+
+#allowLocation:hover {
+  background: #43a047;
+}
+
+#denyLocation {
+  background: #ece6f3;
+  color: var(--text);
+}
+
+#denyLocation:hover {
+  background: #ddd3e8;
 }
 
 /* ========================================
-   Footer / Socials
+   Footer
 ======================================== */
 #social-networks {
-  z-index: 4;
+  width: min(100%, var(--max-app-width));
+  margin: 24px auto 0;
+  padding: 24px 16px 32px;
   display: flex;
   justify-content: space-evenly;
   align-items: center;
-  margin: 0;
-  padding: 50px 0;
-  list-style-type: none;
-  background-color: #ffffff;
+  list-style: none;
+  background: transparent;
 }
 
 #social-networks i {
-  padding: 5%;
-  font-size: 3rem;
-  color: #6a1b9a;
+  font-size: 2rem;
+  color: var(--purple);
 }
 
 #social-networks a:hover i {
@@ -367,84 +566,22 @@ img {
 #backToTopBtn {
   display: none;
   position: fixed;
-  right: 40px;
-  bottom: 40px;
+  right: 20px;
+  bottom: 20px;
   z-index: 9999;
-  padding: 12px 16px;
   border: none;
-  border-radius: 5%;
   outline: none;
-  background-color: #6a1b9a;
-  color: #ffffff;
-  font-size: 24px;
+  background-color: var(--purple);
+  color: white;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  transition: background-color 0.3s ease, opacity 0.3s ease;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
 }
 
 #backToTopBtn:hover {
   background-color: #c632e0;
-}
-
-/* ========================================
-   Popup / Location prompt
-======================================== */
-.popup-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-}
-
-.popup-box {
-  width: 90%;
-  max-width: 400px;
-  padding: 2rem;
-  text-align: center;
-  background: #ffffff;
-  border-radius: 1rem;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-}
-
-.popup-box h2 {
-  margin-bottom: 1rem;
-  font-size: 1.5rem;
-}
-
-.popup-box p {
-  margin-bottom: 1.5rem;
-  font-size: 1rem;
-  color: #333333;
-}
-
-.popup-actions button {
-  margin: 0 0.5rem;
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-#allowLocation {
-  background: #4caf50;
-  color: #ffffff;
-}
-
-#allowLocation:hover {
-  background: #43a047;
-}
-
-#denyLocation {
-  background: #dddddd;
-}
-
-#denyLocation:hover {
-  background: #cccccc;
 }
 
 /* ========================================
@@ -455,7 +592,7 @@ img {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #6a1b9a;
+  background-color: var(--purple);
   border-radius: 4px;
 }
 
@@ -463,18 +600,34 @@ img {
    Responsive
 ======================================== */
 @media (max-width: 768px) {
-  .nav-toggle-label {
-    font-size: 1.5rem;
+  #pastimez-logo {
+    width: min(100%, 280px);
+    max-height: 86px;
   }
 
-  .app-actions {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+  .opening {
+    margin-top: 10px;
+    padding: 14px;
   }
 
-  .install-btn {
-    width: 100%;
-    max-width: 320px;
+  .opening img,
+  .hero img,
+  .carousel-item img {
+    max-height: 230px;
+    border-radius: 14px;
+  }
+
+  .heading-2 {
+    font-size: 1.8rem;
+  }
+
+  #mainAccordion {
+    padding: 10px;
+  }
+
+  .accordion-button {
+    min-height: 52px;
+    font-size: 0.95rem;
   }
 
   .result-card {
@@ -483,21 +636,17 @@ img {
 
   .image-wrapper {
     width: 100%;
-    height: auto;
-    aspect-ratio: 3 / 2;
+    height: 180px;
+    flex: none;
   }
 
-  .content-wrapper {
-    max-width: 100%;
-    flex-basis: 100%;
+  .app-actions {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
-  #backToTopBtn {
-    right: 20px;
-    bottom: 20px;
-  }
-
-  #social-networks i {
-    font-size: 2.2rem;
+  .install-btn {
+    width: 100%;
+    max-width: 340px;
   }
 }
