@@ -14,8 +14,8 @@ The purpose of this website project is to empower its users to build local commu
 
 # Links
 
-- Website Deployment: https://cutbacktg.github.io/pastimez/index.html
-- Github Repository: https://github.com/CutbackTG/pastimez
+- Website Deployment: https://pastimez.netlify.app/
+- Github Repository: https://github.com/CutbackTG/pastimez-pwa
 
 # Features
 
