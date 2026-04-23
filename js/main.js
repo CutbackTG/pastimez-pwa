@@ -580,6 +580,7 @@
         var carouselInner = getElement("carouselInner");
         var item;
         var wrapper;
+        var imageWrap;
         var img;
         var content;
         var title;
@@ -587,45 +588,46 @@
         var link;
 
         if (!carouselInner) {
-            return;
-        }
+        return;
+    }
 
-        item = document.createElement("div");
-        item.className = "carousel-item" + (index === 0 ? " active" : "");
+    item = document.createElement("div");
+    item.className = "carousel-item" + (index === 0 ? " active" : "");
 
-        wrapper = document.createElement("div");
-        wrapper.className = "d-flex flex-column flex-sm-row align-items-center";
+    wrapper = document.createElement("div");
+    wrapper.className = "d-flex flex-column flex-md-row align-items-start";
 
-        img = document.createElement("img");
-        img.src = photoUrl;
-        img.alt = place.name;
-        img.className = "d-block me-sm-3 mb-3 mb-sm-0";
-        img.style.maxWidth = "300px";
-        img.style.height = "auto";
-        img.style.borderRadius = "8px";
+    imageWrap = document.createElement("div");
+    imageWrap.className = "carousel-result-image-wrap";
 
-        content = document.createElement("div");
+    img = document.createElement("img");
+    img.src = photoUrl;
+    img.alt = place.name;
 
-        title = document.createElement("h5");
-        title.textContent = place.name;
+    content = document.createElement("div");
+    content.className = "carousel-result-content";
 
-        address = document.createElement("p");
-        address.textContent = place.vicinity || place.formatted_address || "";
+    title = document.createElement("h5");
+    title.textContent = place.name;
 
-        link = document.createElement("a");
-        link.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
-        link.target = "_blank";
-        link.rel = "noopener";
-        link.textContent = "View on Google Maps";
+    address = document.createElement("p");
+    address.textContent = place.vicinity || place.formatted_address || "";
 
-        content.appendChild(title);
-        content.appendChild(address);
-        content.appendChild(link);
+    link = document.createElement("a");
+    link.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = "View on Google Maps";
 
-        wrapper.appendChild(img);
-        wrapper.appendChild(content);
-        item.appendChild(wrapper);
-        carouselInner.appendChild(item);
+    imageWrap.appendChild(img);
+    content.appendChild(title);
+    content.appendChild(address);
+    content.appendChild(link);
+
+    wrapper.appendChild(imageWrap);
+    wrapper.appendChild(content);
+    item.appendChild(wrapper);
+    carouselInner.appendChild(item);
     }
 
     function performSearch(params) {

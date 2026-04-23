@@ -650,3 +650,102 @@ button[type="submit"]:hover,
     max-width: 340px;
   }
 }
+
+/* =========================
+   Results carousel section
+========================= */
+#resultsCarouselWrapper,
+.results-carousel-wrapper {
+  width: min(100%, var(--max-app-width));
+  margin: 0 auto 28px;
+  padding: 18px 18px 24px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+#resultsCarousel {
+  position: relative;
+  min-height: 260px;
+  padding: 0 56px;
+}
+
+#carouselInner {
+  min-height: 220px;
+}
+
+#resultsCarousel .carousel-item {
+  padding: 10px 0;
+}
+
+#resultsCarousel .carousel-item > div {
+  gap: 16px;
+}
+
+#resultsCarousel img {
+  width: 100%;
+  max-width: 260px;
+  height: 180px !important;
+  object-fit: cover;
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+#resultsCarousel h5 {
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+#resultsCarousel p {
+  margin-bottom: 0.75rem;
+  color: var(--text-muted);
+}
+
+#resultsCarousel .carousel-control-prev,
+#resultsCarousel .carousel-control-next {
+  width: 44px;
+  height: 44px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 1;
+}
+
+#resultsCarousel .carousel-control-prev {
+  left: 0;
+}
+
+#resultsCarousel .carousel-control-next {
+  right: 0;
+}
+
+#resultsCarousel .carousel-control-prev-icon,
+#resultsCarousel .carousel-control-next-icon {
+  width: 44px;
+  height: 44px;
+  background-color: rgba(106, 27, 154, 0.9);
+  border-radius: 999px;
+  background-size: 55% 55%;
+}
+
+/* =========================
+   Discover section spacing
+========================= */
+#hobby-explorer {
+  width: min(100%, var(--max-app-width));
+  margin: 0 auto;
+  padding-top: 8px;
+}
+
+#hobby-explorer .heading-2 {
+  margin-top: 0;
+}
+
+.carousel-result-image-wrap {
+  flex: 0 0 260px;
+}
+
+.carousel-result-content {
+  flex: 1 1 auto;
+  padding-top: 4px;
+}
