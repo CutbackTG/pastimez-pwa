@@ -498,7 +498,7 @@
         }[params.category] || "hobby club";
     }
 
-    function createResultsCard(place, photoUrl) {
+    function createResultsCard(place, photoUrl, links) {
         var hobbyContainer = getElement("hobby-results");
         var col;
         var card;
@@ -506,6 +506,8 @@
         var body;
         var title;
         var addressP;
+        var websiteLink;
+        var mapsLink;
 
         if (!hobbyContainer) {
             return;
@@ -537,6 +539,27 @@
 
         body.appendChild(title);
         body.appendChild(addressP);
+
+        if (links && links.website) {
+            websiteLink = document.createElement("a");
+            websiteLink.href = links.website;
+            websiteLink.target = "_blank";
+            websiteLink.rel = "noopener";
+            websiteLink.textContent = "Visit website";
+            websiteLink.style.display = "inline-block";
+            websiteLink.style.marginRight = "12px";
+            body.appendChild(websiteLink);
+        }
+
+        mapsLink = document.createElement("a");
+        mapsLink.href = (links && links.googleMapsUrl)
+            ? links.googleMapsUrl
+            : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
+        mapsLink.target = "_blank";
+        mapsLink.rel = "noopener";
+        mapsLink.textContent = "View on Google Maps";
+        body.appendChild(mapsLink);
+
         card.appendChild(img);
         card.appendChild(body);
         col.appendChild(card);
@@ -576,7 +599,7 @@
         markers.push(marker);
     }
 
-    function appendCarouselSlide(place, photoUrl, index, distanceMiles) {
+    function appendCarouselSlide(place, photoUrl, index, distanceMiles, links) {
         var carouselInner = getElement("carouselInner");
         var item;
         var wrapper;
@@ -585,7 +608,9 @@
         var content;
         var title;
         var address;
-        var link;
+        var distance;
+        var websiteLink;
+        var mapsLink;
 
         if (!carouselInner) {
             return;
@@ -613,28 +638,69 @@
         address = document.createElement("p");
         address.textContent = place.vicinity || place.formatted_address || "";
 
-        var distance = document.createElement("p");
+        distance = document.createElement("p");
         distance.textContent = distanceMiles + " miles away";
         distance.style.fontWeight = "600";
         distance.style.color = "#6a1b9a";
         distance.style.marginBottom = "8px";
 
-        link = document.createElement("a");
-        link.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
-        link.target = "_blank";
-        link.rel = "noopener";
-        link.textContent = "View on Google Maps";
-
-        imageWrap.appendChild(img);
         content.appendChild(title);
         content.appendChild(address);
         content.appendChild(distance);
-        content.appendChild(link);
 
+        if (links && links.website) {
+            websiteLink = document.createElement("a");
+            websiteLink.href = links.website;
+            websiteLink.target = "_blank";
+            websiteLink.rel = "noopener";
+            websiteLink.textContent = "Visit website";
+            websiteLink.style.display = "inline-block";
+            websiteLink.style.marginRight = "12px";
+            content.appendChild(websiteLink);
+        }
+
+        mapsLink = document.createElement("a");
+        mapsLink.href = (links && links.googleMapsUrl)
+            ? links.googleMapsUrl
+            : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
+        mapsLink.target = "_blank";
+        mapsLink.rel = "noopener";
+        mapsLink.textContent = "View on Google Maps";
+        mapsLink.style.display = "inline-block";
+        content.appendChild(mapsLink);
+
+        imageWrap.appendChild(img);
         wrapper.appendChild(imageWrap);
         wrapper.appendChild(content);
         item.appendChild(wrapper);
         carouselInner.appendChild(item);
+    }
+
+    function fetchPlaceWebsite(place, callback) {
+        var service;
+        var request;
+
+        if (!map || !place || !place.place_id || !google || !google.maps || !google.maps.places) {
+            callback(null);
+            return;
+        }
+
+        service = new google.maps.places.PlacesService(map);
+        request = {
+            placeId: place.place_id,
+            fields: ["name", "website", "url"]
+        };
+
+        service.getDetails(request, function (details, status) {
+            if (status === google.maps.places.PlacesServiceStatus.OK && details) {
+                callback({
+                    website: details.website || null,
+                    googleMapsUrl: details.url || null
+                });
+            } else {
+                callback(null);
+            }
+        });
     }
 
     function loadNearbyClubs(location) {
@@ -695,10 +761,13 @@
 
                 var distanceMiles = (
                     safeComputeDistance(userLatLng, place.geometry.location) / 1609.34
-                    ).toFixed(1);
+                ).toFixed(1);
 
                 createResultMarker(place);
-                appendCarouselSlide(place, photoUrl, index, distanceMiles);
+
+                fetchPlaceWebsite(place, function (links) {
+                    appendCarouselSlide(place, photoUrl, index, distanceMiles, links);
+                });
             });
 
             if (resultsWrapper) {
