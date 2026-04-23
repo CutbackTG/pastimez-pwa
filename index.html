@@ -21,8 +21,8 @@
       crossorigin="anonymous"
     />
     <link rel="stylesheet" href="css/style.css" />
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#6a1b9a">
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#6a1b9a" />
   </head>
 
   <body>
@@ -40,6 +40,21 @@
         </div>
       </div>
     </div>
+
+    <div
+      id="network-banner"
+      class="network-banner hidden"
+      role="status"
+      aria-live="polite"
+    >
+      You’re offline. Live map and club results may be limited.
+    </div>
+
+    <header class="app-actions">
+      <button id="installBtn" class="install-btn hidden" type="button">
+        Install Pastimez
+      </button>
+    </header>
 
     <!-- Navbar -->
     <nav
