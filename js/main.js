@@ -649,24 +649,33 @@
         content.appendChild(distance);
 
         if (links && links.website) {
-            websiteLink = document.createElement("a");
+            var websiteLink = document.createElement("a");
             websiteLink.href = links.website;
             websiteLink.target = "_blank";
             websiteLink.rel = "noopener";
             websiteLink.textContent = "Visit website";
             websiteLink.style.display = "inline-block";
-            websiteLink.style.marginRight = "12px";
+            websiteLink.style.marginRight = "10px";
+
             content.appendChild(websiteLink);
+        } else {
+            var noSite = document.createElement("p");
+            noSite.textContent = "No website available";
+            noSite.style.fontSize = "0.85rem";
+            noSite.style.color = "#777";
+            noSite.style.marginBottom = "6px";
+
+            content.appendChild(noSite);
         }
 
-        mapsLink = document.createElement("a");
+        var mapsLink = document.createElement("a");
         mapsLink.href = (links && links.googleMapsUrl)
             ? links.googleMapsUrl
             : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
         mapsLink.target = "_blank";
         mapsLink.rel = "noopener";
         mapsLink.textContent = "View on Google Maps";
-        mapsLink.style.display = "inline-block";
+
         content.appendChild(mapsLink);
 
         imageWrap.appendChild(img);

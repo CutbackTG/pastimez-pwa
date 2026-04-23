@@ -857,3 +857,24 @@ button[type="submit"]:hover,
 
   overflow: hidden;
 }
+
+.carousel-result-content a {
+  display: inline-block;
+  margin-right: 10px;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.carousel-result-content a:first-of-type {
+  background: #6a1b9a;
+  color: white;
+}
+
+.carousel-result-content a:last-of-type {
+  border: 1px solid #6a1b9a;
+  color: #6a1b9a;
+}
