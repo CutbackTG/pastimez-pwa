@@ -1,0 +1,21 @@
+# Node
+node_modules/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Env / secrets
+.env
+
+# Build / cache
+dist/
+.cache/
+
+# Android (future)
+*.keystore
+local.properties
+.gradle/
