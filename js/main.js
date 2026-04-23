@@ -1,103 +1,116 @@
 /*jslint browser, for */
 /*global google, bootstrap, console */
 
-let deferredInstallPrompt = null;
-
-const installBtn = document.getElementById("installBtn");
-const networkBanner = document.getElementById("network-banner");
-
-function updateNetworkBanner() {
-  if (!networkBanner) return;
-
-  if (navigator.onLine) {
-    networkBanner.classList.add("hidden");
-    networkBanner.textContent = "You’re back online.";
-  } else {
-    networkBanner.textContent = "You’re offline. Live map and club results may be limited.";
-    networkBanner.classList.remove("hidden");
-  }
-}
-
-window.addEventListener("online", () => {
-  updateNetworkBanner();
-
-  // Optional tiny flourish: briefly show "back online"
-  if (networkBanner) {
-    networkBanner.textContent = "You’re back online.";
-    networkBanner.classList.remove("hidden");
-    setTimeout(() => {
-      if (navigator.onLine) {
-        networkBanner.classList.add("hidden");
-      }
-    }, 2500);
-  }
-});
-
-window.addEventListener("offline", () => {
-  updateNetworkBanner();
-});
-
-window.addEventListener("beforeinstallprompt", (event) => {
-  event.preventDefault();
-  deferredInstallPrompt = event;
-
-  if (installBtn) {
-    installBtn.classList.remove("hidden");
-  }
-});
-
-if (installBtn) {
-  installBtn.addEventListener("click", async () => {
-    if (!deferredInstallPrompt) return;
-
-    deferredInstallPrompt.prompt();
-
-    try {
-      const choiceResult = await deferredInstallPrompt.userChoice;
-      console.log("Install prompt result:", choiceResult.outcome);
-    } catch (error) {
-      console.error("Install prompt error:", error);
-    }
-
-    deferredInstallPrompt = null;
-    installBtn.classList.add("hidden");
-  });
-}
-
-window.addEventListener("appinstalled", () => {
-  console.log("Pastimez was installed");
-  if (installBtn) {
-    installBtn.classList.add("hidden");
-  }
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  updateNetworkBanner();
-});
-
 (function () {
     "use strict";
 
-    // Constants
+    // =========================================================
+    // PWA / App UI
+    // =========================================================
+    var deferredInstallPrompt = null;
+    var installBtn = document.getElementById("installBtn");
+    var networkBanner = document.getElementById("network-banner");
+
+    function updateNetworkBanner() {
+        if (!networkBanner) {
+            return;
+        }
+
+        if (navigator.onLine) {
+            networkBanner.textContent = "You’re back online.";
+            networkBanner.classList.add("hidden");
+        } else {
+            networkBanner.textContent = "You’re offline. Live map and club results may be limited.";
+            networkBanner.classList.remove("hidden");
+        }
+    }
+
+    window.addEventListener("online", function () {
+        updateNetworkBanner();
+
+        if (networkBanner) {
+            networkBanner.textContent = "You’re back online.";
+            networkBanner.classList.remove("hidden");
+
+            window.setTimeout(function () {
+                if (navigator.onLine) {
+                    networkBanner.classList.add("hidden");
+                }
+            }, 2500);
+        }
+    });
+
+    window.addEventListener("offline", function () {
+        updateNetworkBanner();
+    });
+
+    window.addEventListener("beforeinstallprompt", function (event) {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+
+        if (installBtn) {
+            installBtn.classList.remove("hidden");
+        }
+    });
+
+    if (installBtn) {
+        installBtn.addEventListener("click", function () {
+            if (!deferredInstallPrompt) {
+                return;
+            }
+
+            deferredInstallPrompt.prompt();
+
+            deferredInstallPrompt.userChoice.then(function (choiceResult) {
+                console.log("Install prompt result:", choiceResult.outcome);
+                deferredInstallPrompt = null;
+                installBtn.classList.add("hidden");
+            }).catch(function (error) {
+                console.error("Install prompt error:", error);
+            });
+        });
+    }
+
+    window.addEventListener("appinstalled", function () {
+        console.log("Pastimez was installed");
+        if (installBtn) {
+            installBtn.classList.add("hidden");
+        }
+    });
+
+    // =========================================================
+    // App Constants / State
+    // =========================================================
     var MAX_DISCOVER = 12;
     var INTERESTS = ["Creative", "Tech", "Physical", "Social", "Nature", "Relaxing"];
     var BASE_PURPLE = "#6a1b9a";
+    var DEFAULT_LOCATION = { lat: 50.266, lng: -5.052 };
 
-    // Globals
-    var map;
-    var userLocation;
+    var map = null;
     var markers = [];
+    var userLocation = null;
     var userMarker = null;
     var activeInfoWindow = null;
     var discoverResults = [];
+    var mapReady = false;
 
-    // Utilities
+    // =========================================================
+    // Helpers
+    // =========================================================
+    function getElement(id) {
+        return document.getElementById(id);
+    }
+
     function clearMarkers() {
-        for (var i = 0; i < markers.length; i += 1) {
-            markers[i].setMap(null);
-        }
+        markers.forEach(function (marker) {
+            if (marker) {
+                marker.setMap(null);
+            }
+        });
+
         markers = [];
-        if (userMarker) {
+
+        if (userMarker && map) {
             userMarker.setMap(map);
             markers.push(userMarker);
         }
@@ -107,16 +120,19 @@ document.addEventListener("DOMContentLoaded", () => {
         var r = parseInt(hex.slice(1, 3), 16);
         var g = parseInt(hex.slice(3, 5), 16);
         var b = parseInt(hex.slice(5, 7), 16);
+
         var nr = Math.min(255, Math.floor(r + (255 - r) * factor));
         var ng = Math.min(255, Math.floor(g + (255 - g) * factor));
         var nb = Math.min(255, Math.floor(b + (255 - b) * factor));
+
         return "rgb(" + nr + ", " + ng + ", " + nb + ")";
     }
 
     function styleAccordionItem(item, bgColor, textColor) {
         var button = item.querySelector(".accordion-button");
         var body = item.querySelector(".accordion-body");
-        var label, input;
+        var label;
+        var input;
 
         if (button) {
             button.style.backgroundColor = bgColor;
@@ -128,8 +144,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (body) {
             body.style.display = "flex";
-            body.style.alignItems = "center";
-            body.style.gap = "20px";
+            body.style.flexDirection = "column";
+            body.style.alignItems = "stretch";
+            body.style.gap = "12px";
             body.style.padding = "1rem";
             body.style.borderRadius = "0 0 0.5rem 0.5rem";
             body.style.backgroundColor = lightenHexColor(bgColor, 0.7);
@@ -138,27 +155,85 @@ document.addEventListener("DOMContentLoaded", () => {
             input = body.querySelector("input, select");
 
             if (label) {
-                label.style.flex = "1 0 0%";
                 label.style.marginBottom = "0";
                 label.style.color = textColor;
                 label.style.fontWeight = "600";
             }
 
             if (input) {
-                input.style.flex = "1 0 70%";
-                input.style.maxWidth = "400px";
                 input.style.width = "100%";
-                input.style.padding = "0.5rem";
+                input.style.padding = "0.75rem";
                 input.style.border = "1px solid " + textColor;
-                input.style.borderRadius = "0.3rem";
+                input.style.borderRadius = "0.5rem";
                 input.style.boxSizing = "border-box";
             }
         }
     }
 
+    function scrollToElement(element, offset) {
+        var elementTop = element.offsetTop - (offset || 100);
+        window.scrollTo({
+            top: elementTop,
+            behavior: "smooth"
+        });
+    }
+
+    function openAccordion(item) {
+        var collapse = item.querySelector(".accordion-collapse");
+
+        if (collapse && !collapse.classList.contains("show")) {
+            new bootstrap.Collapse(collapse, { show: true });
+            window.setTimeout(function () {
+                scrollToElement(item);
+            }, 300);
+        }
+    }
+
+    function showError(input, message) {
+        var existing;
+        var err;
+
+        if (!input || !input.parentElement) {
+            return;
+        }
+
+        existing = input.parentElement.querySelector(".error-message");
+        if (existing) {
+            return;
+        }
+
+        err = document.createElement("div");
+        err.className = "error-message text-danger small mt-1";
+        err.textContent = message;
+        input.parentElement.appendChild(err);
+    }
+
+    function clearErrors() {
+        document.querySelectorAll(".error-message").forEach(function (err) {
+            err.remove();
+        });
+    }
+
+    function setStatusMessage(message) {
+        if (!networkBanner) {
+            return;
+        }
+
+        networkBanner.textContent = message;
+        networkBanner.classList.remove("hidden");
+
+        window.setTimeout(function () {
+            if (navigator.onLine && networkBanner.textContent === message) {
+                networkBanner.classList.add("hidden");
+            }
+        }, 2500);
+    }
+
+    // =========================================================
     // Discover Helpers
+    // =========================================================
     function mapPlaceToTags(place) {
-        var text = (place.name + " " + (place.types || []).join(" ")).toLowerCase();
+        var text = (place.name + " " + ((place.types || []).join(" "))).toLowerCase();
         var tags = [];
 
         function match(regex, tag) {
@@ -177,22 +252,31 @@ document.addEventListener("DOMContentLoaded", () => {
         if (tags.length === 0) {
             tags.push("Creative");
         }
+
         return tags;
     }
 
     function renderDiscoverResults() {
-        var container = document.getElementById("discover-results");
-        if (!container) return;
+        var container = getElement("hobby-results");
+        var activeTags;
+        var filtered;
 
-        var activeTags = Array.from(document.querySelectorAll(".interest-tag.active")).map(function (t) {
-            return t.textContent;
+        if (!container) {
+            return;
+        }
+
+        activeTags = Array.from(document.querySelectorAll(".interest-tag.active")).map(function (tag) {
+            return tag.textContent;
         });
+
         container.innerHTML = "";
 
-        var filtered = activeTags.length === 0
+        filtered = activeTags.length === 0
             ? discoverResults
-            : discoverResults.filter(function (p) {
-                return p.tags.some(function (t) { return activeTags.indexOf(t) !== -1; });
+            : discoverResults.filter(function (place) {
+                return place.tags.some(function (tag) {
+                    return activeTags.indexOf(tag) !== -1;
+                });
             });
 
         if (filtered.length === 0) {
@@ -200,29 +284,26 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        for (var i = 0; i < filtered.length; i += 1) {
-            var place = filtered[i];
+        filtered.forEach(function (place) {
             var col = document.createElement("div");
-            col.className = "col";
-
             var card = document.createElement("div");
-            card.className = "card h-100 shadow-sm";
-
             var img = document.createElement("img");
+            var body = document.createElement("div");
+            var title = document.createElement("h5");
+            var address = document.createElement("p");
+
+            col.className = "col";
+            card.className = "card h-100 shadow-sm";
             img.className = "card-img-top";
             img.style.objectFit = "cover";
             img.style.height = "200px";
             img.src = place.photo || "https://via.placeholder.com/300x200?text=No+Image";
             img.alt = place.name;
 
-            var body = document.createElement("div");
             body.className = "card-body";
-
-            var title = document.createElement("h5");
             title.className = "card-title";
             title.textContent = place.name;
 
-            var address = document.createElement("p");
             address.className = "card-text";
             address.textContent = place.address;
 
@@ -232,74 +313,124 @@ document.addEventListener("DOMContentLoaded", () => {
             card.appendChild(body);
             col.appendChild(card);
             container.appendChild(col);
+        });
+    }
+
+    function safeComputeDistance(fromLatLng, toLatLng) {
+        if (google &&
+                google.maps &&
+                google.maps.geometry &&
+                google.maps.geometry.spherical &&
+                typeof google.maps.geometry.spherical.computeDistanceBetween === "function") {
+            return google.maps.geometry.spherical.computeDistanceBetween(fromLatLng, toLatLng);
         }
+
+        return 0;
     }
 
     function loadDiscoverResults(location) {
-        if (!google || !google.maps || !google.maps.places) {
-            console.error("Google Maps Places API not loaded");
+        var service;
+        var request;
+
+        if (!mapReady || !map || !google || !google.maps || !google.maps.places) {
+            console.warn("Google Maps Places API not ready yet");
             return;
         }
 
-        var service = new google.maps.places.PlacesService(map);
-        var request = {
+        service = new google.maps.places.PlacesService(map);
+        request = {
             location: new google.maps.LatLng(location.lat, location.lng),
             radius: 16093,
             keyword: "hobby club"
         };
 
         service.nearbySearch(request, function (results, status) {
+            var userLatLng;
+
             if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
-                console.warn("No default results found:", status);
+                console.warn("No default discover results found:", status);
+                discoverResults = [];
+                renderDiscoverResults();
                 return;
             }
 
-            var userLatLng = new google.maps.LatLng(location.lat, location.lng);
+            userLatLng = new google.maps.LatLng(location.lat, location.lng);
+
             results.sort(function (a, b) {
-                var d1 = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, a.geometry.location);
-                var d2 = google.maps.geometry.spherical.computeDistanceBetween(userLatLng, b.geometry.location);
+                var d1 = safeComputeDistance(userLatLng, a.geometry.location);
+                var d2 = safeComputeDistance(userLatLng, b.geometry.location);
                 return d1 - d2;
             });
 
-            discoverResults = [];
-            for (var i = 0; i < Math.min(results.length, MAX_DISCOVER); i += 1) {
-                discoverResults.push({
-                    name: results[i].name,
-                    address: results[i].vicinity || results[i].formatted_address || "",
-                    photo: (results[i].photos && results[i].photos.length) ? results[i].photos[0].getUrl({ maxWidth: 300, maxHeight: 200 }) : null,
-                    tags: mapPlaceToTags(results[i])
-                });
-            }
+            discoverResults = results.slice(0, MAX_DISCOVER).map(function (result) {
+                return {
+                    name: result.name,
+                    address: result.vicinity || result.formatted_address || "",
+                    photo: (result.photos && result.photos.length)
+                        ? result.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 })
+                        : null,
+                    tags: mapPlaceToTags(result)
+                };
+            });
 
             renderDiscoverResults();
         });
     }
 
-    // Google Map
+    // =========================================================
+    // Map
+    // =========================================================
     function initMap() {
-        map = new google.maps.Map(document.getElementById("map"), {
-            center: { lat: 50.266, lng: -5.052 },
-            zoom: 10
+        var mapElement = getElement("map");
+
+        if (!mapElement || !google || !google.maps) {
+            console.error("Map element or Google Maps API not available.");
+            return;
+        }
+
+        map = new google.maps.Map(mapElement, {
+            center: DEFAULT_LOCATION,
+            zoom: 10,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true
         });
+
+        mapReady = true;
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                function (pos) { setUserLocation(pos.coords.latitude, pos.coords.longitude, "You are here"); },
-                function () { setUserLocation(50.266, -5.052, "Default Location"); }
+                function (pos) {
+                    setUserLocation(pos.coords.latitude, pos.coords.longitude, "You are here");
+                },
+                function () {
+                    setUserLocation(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng, "Default location");
+                }
             );
         } else {
-            setUserLocation(50.266, -5.052, "Default Location");
+            setUserLocation(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng, "Default location");
         }
     }
 
     function setUserLocation(lat, lng, title) {
-        userLocation = { lat: lat, lng: lng };
+        if (!mapReady || !map) {
+            console.warn("Map is not initialized yet.");
+            return;
+        }
+
+        userLocation = {
+            lat: lat,
+            lng: lng
+        };
+
         map.setCenter(userLocation);
         map.setZoom(12);
 
         if (userMarker) {
             userMarker.setMap(null);
-            markers = markers.filter(function (m) { return m !== userMarker; });
+            markers = markers.filter(function (marker) {
+                return marker !== userMarker;
+            });
         }
 
         userMarker = new google.maps.Marker({
@@ -311,62 +442,53 @@ document.addEventListener("DOMContentLoaded", () => {
                 scaledSize: new google.maps.Size(32, 32)
             }
         });
-        markers.push(userMarker);
 
+        markers.push(userMarker);
         loadDiscoverResults(userLocation);
     }
 
-    function scrollToElement(element, offset) {
-        var elementTop = element.offsetTop - (offset || 100);
-        window.scrollTo({ top: elementTop, behavior: "smooth" });
-    }
-
+    // =========================================================
+    // Search Flow
+    // =========================================================
     function checkAndOpenNext() {
-        var hobbyInput = document.getElementById("hobbyInput");
-        var categorySelect = document.getElementById("categorySelect");
-        var radiusInput = document.getElementById("radius");
-        var indoorOutdoor = document.getElementById("indoorOutdoor");
-        var manualLocationInput = document.getElementById("manualLocation");
+        var hobbyInput = getElement("hobbyInput");
+        var categorySelect = getElement("categorySelect");
+        var radiusInput = getElement("radius");
+        var manualLocationInput = getElement("manualLocation");
         var accordionItems = document.querySelectorAll(".accordion-item");
 
         var hobbyValue = hobbyInput ? hobbyInput.value.trim() : "";
         var categoryValue = categorySelect ? categorySelect.value : "";
         var locationValue = manualLocationInput ? manualLocationInput.value.trim() : "";
         var radiusValue = radiusInput ? radiusInput.value.trim() : "";
-        var indoorOutdoorValue = indoorOutdoor ? indoorOutdoor.value : "";
 
         var isHobbyComplete = hobbyValue || categoryValue;
         var isLocationComplete = userLocation || locationValue;
         var isDistanceComplete = radiusValue;
 
-        if (isHobbyComplete && accordionItems[1]) openAccordion(accordionItems[1]);
-        if (isLocationComplete && accordionItems[2]) openAccordion(accordionItems[2]);
-        if (isDistanceComplete && accordionItems[3]) openAccordion(accordionItems[3]);
-    }
-
-    function openAccordion(item) {
-        var collapse = item.querySelector(".accordion-collapse");
-        if (collapse && !collapse.classList.contains("show")) {
-            new bootstrap.Collapse(collapse, { show: true });
-            setTimeout(function () { scrollToElement(item); }, 300);
+        if (isHobbyComplete && accordionItems[1]) {
+            openAccordion(accordionItems[1]);
+        }
+        if (isLocationComplete && accordionItems[2]) {
+            openAccordion(accordionItems[2]);
+        }
+        if (isDistanceComplete && accordionItems[3]) {
+            openAccordion(accordionItems[3]);
         }
     }
 
-    function showError(input, message) {
-        if (!input || input.parentElement.querySelector(".error-message")) return;
-        var err = document.createElement("div");
-        err.className = "error-message text-danger small mt-1";
-        err.textContent = message;
-        input.parentElement.appendChild(err);
-    }
+    function buildKeyword(params) {
+        if (params.hobby) {
+            if (params.preference === "indoor") {
+                return params.hobby + " indoor club";
+            }
+            if (params.preference === "outdoor") {
+                return params.hobby + " outdoor club";
+            }
+            return params.hobby + " club";
+        }
 
-    // Search
-    function performSearch(params) {
-        if (!userLocation) { window.alert("Please set your location first."); return; }
-        if (!google || !google.maps || !google.maps.places) { window.alert("Google Maps not loaded."); return; }
-
-        var radiusMeters = params.radiusMiles * 1609.34;
-        var keyword = params.hobby ? params.hobby + (params.preference === "indoor" ? " indoor club" : params.preference === "outdoor" ? " outdoor club" : " club") : {
+        return {
             sports: "sports club",
             crafting: "crafts club",
             music: "music group",
@@ -374,152 +496,330 @@ document.addEventListener("DOMContentLoaded", () => {
             social: "community group",
             outdoors: "outdoor adventure club"
         }[params.category] || "hobby club";
+    }
 
-        var service = new google.maps.places.PlacesService(map);
-        var request = { location: new google.maps.LatLng(userLocation.lat, userLocation.lng), radius: radiusMeters, keyword: keyword };
+    function createResultsCard(place, photoUrl) {
+        var hobbyContainer = getElement("hobby-results");
+        var col;
+        var card;
+        var img;
+        var body;
+        var title;
+        var addressP;
 
-        clearMarkers();
-        document.getElementById("carouselInner")?.replaceChildren();
-        document.getElementById("hobby-results")?.replaceChildren();
+        if (!hobbyContainer) {
+            return;
+        }
 
-        service.nearbySearch(request, function (results, status) {
-            if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) { window.alert("No results found."); return; }
+        col = document.createElement("div");
+        col.className = "col";
 
-            var userLatLng = new google.maps.LatLng(userLocation.lat, userLocation.lng);
-            results.sort(function (a, b) { return google.maps.geometry.spherical.computeDistanceBetween(userLatLng, a.geometry.location) - google.maps.geometry.spherical.computeDistanceBetween(userLatLng, b.geometry.location); });
+        card = document.createElement("div");
+        card.className = "card h-100 shadow-sm";
 
-            results.slice(0, 12).forEach(function (place, i) {
-                var photoUrl = (place.photos && place.photos.length) ? place.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 }) : "https://via.placeholder.com/300x200?text=No+Image";
+        img = document.createElement("img");
+        img.src = photoUrl;
+        img.alt = place.name;
+        img.className = "card-img-top";
+        img.style.objectFit = "cover";
+        img.style.height = "200px";
 
-                // Card
-                var hobbyContainer = document.getElementById("hobby-results");
-                if (hobbyContainer) {
-                    var col = document.createElement("div");
-                    col.className = "col";
-                    var card = document.createElement("div");
-                    card.className = "card h-100 shadow-sm";
-                    var img = document.createElement("img");
-                    img.src = photoUrl;
-                    img.alt = place.name;
-                    img.className = "card-img-top";
-                    img.style.objectFit = "cover";
-                    img.style.height = "200px";
-                    var body = document.createElement("div");
-                    body.className = "card-body";
-                    var title = document.createElement("h5");
-                    title.className = "card-title";
-                    title.textContent = place.name;
-                    var addressP = document.createElement("p");
-                    addressP.className = "card-text";
-                    addressP.textContent = place.vicinity || place.formatted_address || "";
-                    body.appendChild(title);
-                    body.appendChild(addressP);
-                    card.appendChild(img);
-                    card.appendChild(body);
-                    col.appendChild(card);
-                    hobbyContainer.appendChild(col);
-                }
+        body = document.createElement("div");
+        body.className = "card-body";
 
-                // Marker
-                var marker = new google.maps.Marker({
-                    map: map,
-                    position: place.geometry.location,
-                    title: place.name,
-                    icon: { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png", scaledSize: new google.maps.Size(32, 32) }
-                });
-                markers.push(marker);
+        title = document.createElement("h5");
+        title.className = "card-title";
+        title.textContent = place.name;
 
-                marker.addListener("click", function () {
-                    if (activeInfoWindow) activeInfoWindow.close();
-                    activeInfoWindow = new google.maps.InfoWindow({
-                        content: "<div><h6>" + place.name + "</h6><p>" + (place.vicinity || place.formatted_address || "") + '</p><a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(place.name) + '" target="_blank">View on Google Maps</a></div>'
-                    });
-                    activeInfoWindow.open(map, marker);
-                });
+        addressP = document.createElement("p");
+        addressP.className = "card-text";
+        addressP.textContent = place.vicinity || place.formatted_address || "";
 
-                // Carousel
-                var carouselInner = document.getElementById("carouselInner");
-                if (carouselInner) {
-                    var activeClass = i === 0 ? "active" : "";
-                    carouselInner.innerHTML += '<div class="carousel-item ' + activeClass + '"><div class="d-flex flex-column flex-sm-row align-items-center"><img src="' + photoUrl + '" class="d-block me-sm-3 mb-3 mb-sm-0" style="max-width:300px;height:auto;border-radius:8px;"><div><h5>' + place.name + '</h5><p>' + (place.vicinity || "") + '</p><a href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(place.name) + '" target="_blank">View on Google Maps</a></div></div></div>';
-                }
+        body.appendChild(title);
+        body.appendChild(addressP);
+        card.appendChild(img);
+        card.appendChild(body);
+        col.appendChild(card);
+        hobbyContainer.appendChild(col);
+    }
+
+    function createResultMarker(place) {
+        var marker = new google.maps.Marker({
+            map: map,
+            position: place.geometry.location,
+            title: place.name,
+            icon: {
+                url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                scaledSize: new google.maps.Size(32, 32)
+            }
+        });
+
+        marker.addListener("click", function () {
+            if (activeInfoWindow) {
+                activeInfoWindow.close();
+            }
+
+            activeInfoWindow = new google.maps.InfoWindow({
+                content:
+                    "<div>" +
+                    "<h6>" + place.name + "</h6>" +
+                    "<p>" + (place.vicinity || place.formatted_address || "") + "</p>" +
+                    '<a href="https://www.google.com/maps/search/?api=1&query=' +
+                    encodeURIComponent(place.name) +
+                    '" target="_blank" rel="noopener">View on Google Maps</a>' +
+                    "</div>"
             });
 
-            var carouselElement = document.getElementById("carouselExampleControls");
-            if (carouselElement) carouselElement.style.display = "block";
+            activeInfoWindow.open(map, marker);
+        });
+
+        markers.push(marker);
+    }
+
+    function appendCarouselSlide(place, photoUrl, index) {
+        var carouselInner = getElement("carouselInner");
+        var item;
+        var wrapper;
+        var img;
+        var content;
+        var title;
+        var address;
+        var link;
+
+        if (!carouselInner) {
+            return;
+        }
+
+        item = document.createElement("div");
+        item.className = "carousel-item" + (index === 0 ? " active" : "");
+
+        wrapper = document.createElement("div");
+        wrapper.className = "d-flex flex-column flex-sm-row align-items-center";
+
+        img = document.createElement("img");
+        img.src = photoUrl;
+        img.alt = place.name;
+        img.className = "d-block me-sm-3 mb-3 mb-sm-0";
+        img.style.maxWidth = "300px";
+        img.style.height = "auto";
+        img.style.borderRadius = "8px";
+
+        content = document.createElement("div");
+
+        title = document.createElement("h5");
+        title.textContent = place.name;
+
+        address = document.createElement("p");
+        address.textContent = place.vicinity || place.formatted_address || "";
+
+        link = document.createElement("a");
+        link.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = "View on Google Maps";
+
+        content.appendChild(title);
+        content.appendChild(address);
+        content.appendChild(link);
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(content);
+        item.appendChild(wrapper);
+        carouselInner.appendChild(item);
+    }
+
+    function performSearch(params) {
+        var radiusMeters;
+        var keyword;
+        var service;
+        var request;
+        var carouselInner;
+        var resultsContainer;
+
+        if (!userLocation) {
+            window.alert("Please set your location first.");
+            return;
+        }
+
+        if (!mapReady || !map || !google || !google.maps || !google.maps.places) {
+            window.alert("Google Maps is not ready yet.");
+            return;
+        }
+
+        radiusMeters = params.radiusMiles * 1609.34;
+        keyword = buildKeyword(params);
+
+        service = new google.maps.places.PlacesService(map);
+        request = {
+            location: new google.maps.LatLng(userLocation.lat, userLocation.lng),
+            radius: radiusMeters,
+            keyword: keyword
+        };
+
+        clearMarkers();
+
+        carouselInner = getElement("carouselInner");
+        resultsContainer = getElement("hobby-results");
+
+        if (carouselInner) {
+            carouselInner.innerHTML = "";
+        }
+        if (resultsContainer) {
+            resultsContainer.innerHTML = "";
+        }
+
+        service.nearbySearch(request, function (results, status) {
+            var userLatLng;
+
+            if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
+                window.alert("No results found.");
+                return;
+            }
+
+            userLatLng = new google.maps.LatLng(userLocation.lat, userLocation.lng);
+
+            results.sort(function (a, b) {
+                return safeComputeDistance(userLatLng, a.geometry.location) -
+                    safeComputeDistance(userLatLng, b.geometry.location);
+            });
+
+            results.slice(0, 12).forEach(function (place, index) {
+                var photoUrl = (place.photos && place.photos.length)
+                    ? place.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 })
+                    : "https://via.placeholder.com/300x200?text=No+Image";
+
+                createResultsCard(place, photoUrl);
+                createResultMarker(place);
+                appendCarouselSlide(place, photoUrl, index);
+            });
+
+            setStatusMessage("Found " + Math.min(results.length, 12) + " clubs near you.");
         });
     }
 
-    // DOM Ready
+    // =========================================================
+    // DOM Setup
+    // =========================================================
     document.addEventListener("DOMContentLoaded", function () {
-        // Tags
-        var tagContainer = document.getElementById("interest-tags");
-        if (tagContainer) INTERESTS.forEach(function (interest) {
-            var tag = document.createElement("span");
-            tag.className = "interest-tag tag active";
-            tag.textContent = interest;
-            tag.onclick = function () { tag.classList.toggle("active"); renderDiscoverResults(); };
-            tagContainer.appendChild(tag);
-        });
+        var tagContainer = getElement("interest-tags");
+        var searchForm = getElement("searchForm");
+        var manualLocationBtn = getElement("manualLocationBtn");
 
-        renderDiscoverResults();
+        updateNetworkBanner();
 
-        // Accordion styling
-        document.querySelectorAll(".accordion-item").forEach(function (item) { styleAccordionItem(item, BASE_PURPLE, "#fff"); });
-
-        // Progressive accordion
-        ["hobbyInput", "categorySelect", "radius", "indoorOutdoor", "manualLocation"].forEach(function (id) {
-            var el = document.getElementById(id);
-            if (el) { el.addEventListener("input", checkAndOpenNext); el.addEventListener("change", checkAndOpenNext); }
-        });
-
-        // Form submit
-        var searchForm = document.getElementById("searchForm");
-        if (searchForm) {
-            searchForm.addEventListener("submit", function (e) {
-                e.preventDefault();
-                document.querySelectorAll(".error-message").forEach(function (err) { err.remove(); });
-
-                var hobby = document.getElementById("hobbyInput")?.value.trim() || "";
-                var category = document.getElementById("categorySelect")?.value || "";
-                var preference = document.getElementById("indoorOutdoor")?.value || "";
-                var radiusVal = document.getElementById("radius")?.value.trim() || "";
-                var valid = true;
-
-                if (!hobby && !category) { showError(document.getElementById("hobbyInput"), "Enter a hobby or select a category."); showError(document.getElementById("categorySelect"), "Enter a hobby or select a category."); valid = false; }
-                if (!preference) { showError(document.getElementById("indoorOutdoor"), "Select indoor or outdoor preference."); valid = false; }
-
-                var radiusMiles = radiusVal ? Number(radiusVal) : 10;
-                if (radiusVal && (Number.isNaN(radiusMiles) || radiusMiles < 1 || radiusMiles > 100)) { showError(document.getElementById("radius"), "Distance must be between 1 and 100 miles."); valid = false; }
-
-                if (!valid) return;
-
-                performSearch({ hobby: hobby, category: category, preference: preference, radiusMiles: radiusMiles });
+        if (tagContainer) {
+            INTERESTS.forEach(function (interest) {
+                var tag = document.createElement("span");
+                tag.className = "interest-tag tag active";
+                tag.textContent = interest;
+                tag.addEventListener("click", function () {
+                    tag.classList.toggle("active");
+                    renderDiscoverResults();
+                });
+                tagContainer.appendChild(tag);
             });
         }
 
-        // Manual location
-        var manualLocationBtn = document.getElementById("manualLocationBtn");
+        renderDiscoverResults();
+
+        document.querySelectorAll(".accordion-item").forEach(function (item) {
+            styleAccordionItem(item, BASE_PURPLE, "#ffffff");
+        });
+
+        ["hobbyInput", "categorySelect", "radius", "indoorOutdoor", "manualLocation"].forEach(function (id) {
+            var el = getElement(id);
+            if (el) {
+                el.addEventListener("input", checkAndOpenNext);
+                el.addEventListener("change", checkAndOpenNext);
+            }
+        });
+
+        if (searchForm) {
+            searchForm.addEventListener("submit", function (e) {
+                var hobbyInput = getElement("hobbyInput");
+                var categorySelect = getElement("categorySelect");
+                var indoorOutdoor = getElement("indoorOutdoor");
+                var radiusInput = getElement("radius");
+
+                var hobby;
+                var category;
+                var preference;
+                var radiusVal;
+                var radiusMiles;
+                var valid = true;
+
+                e.preventDefault();
+                clearErrors();
+
+                hobby = hobbyInput ? hobbyInput.value.trim() : "";
+                category = categorySelect ? categorySelect.value : "";
+                preference = indoorOutdoor ? indoorOutdoor.value : "";
+                radiusVal = radiusInput ? radiusInput.value.trim() : "";
+
+                if (!hobby && !category) {
+                    showError(hobbyInput, "Enter a hobby or select a category.");
+                    showError(categorySelect, "Enter a hobby or select a category.");
+                    valid = false;
+                }
+
+                if (!preference) {
+                    showError(indoorOutdoor, "Select indoor or outdoor preference.");
+                    valid = false;
+                }
+
+                radiusMiles = radiusVal ? Number(radiusVal) : 10;
+
+                if (radiusVal && (Number.isNaN(radiusMiles) || radiusMiles < 1 || radiusMiles > 100)) {
+                    showError(radiusInput, "Distance must be between 1 and 100 miles.");
+                    valid = false;
+                }
+
+                if (!valid) {
+                    return;
+                }
+
+                performSearch({
+                    hobby: hobby,
+                    category: category,
+                    preference: preference,
+                    radiusMiles: radiusMiles
+                });
+            });
+        }
+
         if (manualLocationBtn) {
             manualLocationBtn.addEventListener("click", function () {
-                var address = document.getElementById("manualLocation")?.value.trim();
-                if (!address) return window.alert("Please enter a location.");
+                var manualLocationInput = getElement("manualLocation");
+                var address = manualLocationInput ? manualLocationInput.value.trim() : "";
+                var originalText;
+                var geocoder;
 
-                var originalText = manualLocationBtn.textContent;
+                if (!address) {
+                    window.alert("Please enter a location.");
+                    return;
+                }
+
+                if (!google || !google.maps || typeof google.maps.Geocoder !== "function") {
+                    window.alert("Google Maps is not ready yet.");
+                    return;
+                }
+
+                originalText = manualLocationBtn.textContent;
                 manualLocationBtn.disabled = true;
                 manualLocationBtn.textContent = "Setting location...";
 
-                var geocoder = new google.maps.Geocoder();
+                geocoder = new google.maps.Geocoder();
                 geocoder.geocode({ address: address }, function (results, status) {
                     if (status === "OK" && results[0]) {
                         var locationData = results[0].geometry.location;
                         setUserLocation(locationData.lat(), locationData.lng(), "Your chosen location");
                         checkAndOpenNext();
-                        window.alert("Location set to: " + results[0].formatted_address);
+                        setStatusMessage("Location set to: " + results[0].formatted_address);
                     } else {
                         window.alert("Could not find that location. Please try again.");
                         console.error("Geocoding failed:", status);
                     }
+
                     manualLocationBtn.disabled = false;
                     manualLocationBtn.textContent = originalText;
                 });
@@ -527,7 +827,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Expose initMap
+    // =========================================================
+    // Expose initMap for Google callback
+    // =========================================================
     window.initMap = initMap;
-
 }());
