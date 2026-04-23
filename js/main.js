@@ -318,10 +318,10 @@
 
     function safeComputeDistance(fromLatLng, toLatLng) {
         if (google &&
-                google.maps &&
-                google.maps.geometry &&
-                google.maps.geometry.spherical &&
-                typeof google.maps.geometry.spherical.computeDistanceBetween === "function") {
+            google.maps &&
+            google.maps.geometry &&
+            google.maps.geometry.spherical &&
+            typeof google.maps.geometry.spherical.computeDistanceBetween === "function") {
             return google.maps.geometry.spherical.computeDistanceBetween(fromLatLng, toLatLng);
         }
 
@@ -444,7 +444,7 @@
         });
 
         markers.push(userMarker);
-        loadDiscoverResults(userLocation);
+        loadNearbyClubs(userLocation);
     }
 
     // =========================================================
@@ -588,46 +588,114 @@
         var link;
 
         if (!carouselInner) {
-        return;
+            return;
+        }
+
+        item = document.createElement("div");
+        item.className = "carousel-item" + (index === 0 ? " active" : "");
+
+        wrapper = document.createElement("div");
+        wrapper.className = "d-flex flex-column flex-md-row align-items-start";
+
+        imageWrap = document.createElement("div");
+        imageWrap.className = "carousel-result-image-wrap";
+
+        img = document.createElement("img");
+        img.src = photoUrl;
+        img.alt = place.name;
+
+        content = document.createElement("div");
+        content.className = "carousel-result-content";
+
+        title = document.createElement("h5");
+        title.textContent = place.name;
+
+        address = document.createElement("p");
+        address.textContent = place.vicinity || place.formatted_address || "";
+
+        link = document.createElement("a");
+        link.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = "View on Google Maps";
+
+        imageWrap.appendChild(img);
+        content.appendChild(title);
+        content.appendChild(address);
+        content.appendChild(link);
+
+        wrapper.appendChild(imageWrap);
+        wrapper.appendChild(content);
+        item.appendChild(wrapper);
+        carouselInner.appendChild(item);
     }
 
-    item = document.createElement("div");
-    item.className = "carousel-item" + (index === 0 ? " active" : "");
+    function loadNearbyClubs(location) {
+        var service;
+        var request;
+        var carouselInner;
+        var resultsWrapper;
 
-    wrapper = document.createElement("div");
-    wrapper.className = "d-flex flex-column flex-md-row align-items-start";
+        if (!mapReady || !map || !google || !google.maps || !google.maps.places) {
+            console.warn("Google Maps is not ready yet.");
+            return;
+        }
 
-    imageWrap = document.createElement("div");
-    imageWrap.className = "carousel-result-image-wrap";
+        service = new google.maps.places.PlacesService(map);
+        request = {
+            location: new google.maps.LatLng(location.lat, location.lng),
+            radius: 16093, // about 10 miles
+            keyword: "club"
+        };
 
-    img = document.createElement("img");
-    img.src = photoUrl;
-    img.alt = place.name;
+        clearMarkers();
 
-    content = document.createElement("div");
-    content.className = "carousel-result-content";
+        carouselInner = getElement("carouselInner");
+        resultsWrapper = getElement("resultsCarouselWrapper");
 
-    title = document.createElement("h5");
-    title.textContent = place.name;
+        if (carouselInner) {
+            carouselInner.innerHTML = "";
+        }
 
-    address = document.createElement("p");
-    address.textContent = place.vicinity || place.formatted_address || "";
+        service.nearbySearch(request, function (results, status) {
+            var userLatLng;
 
-    link = document.createElement("a");
-    link.href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
-    link.target = "_blank";
-    link.rel = "noopener";
-    link.textContent = "View on Google Maps";
+            if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
+                console.warn("No nearby clubs found:", status);
 
-    imageWrap.appendChild(img);
-    content.appendChild(title);
-    content.appendChild(address);
-    content.appendChild(link);
+                if (carouselInner) {
+                    carouselInner.innerHTML =
+                        '<div class="carousel-item active">' +
+                        '<div class="text-center p-4">' +
+                        "<p>No nearby clubs were found for this area yet.</p>" +
+                        "</div></div>";
+                }
 
-    wrapper.appendChild(imageWrap);
-    wrapper.appendChild(content);
-    item.appendChild(wrapper);
-    carouselInner.appendChild(item);
+                return;
+            }
+
+            userLatLng = new google.maps.LatLng(location.lat, location.lng);
+
+            results.sort(function (a, b) {
+                return safeComputeDistance(userLatLng, a.geometry.location) -
+                    safeComputeDistance(userLatLng, b.geometry.location);
+            });
+
+            results.slice(0, 10).forEach(function (place, index) {
+                var photoUrl = (place.photos && place.photos.length)
+                    ? place.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 })
+                    : "https://via.placeholder.com/300x200?text=No+Image";
+
+                createResultMarker(place);
+                appendCarouselSlide(place, photoUrl, index);
+            });
+
+            if (resultsWrapper) {
+                resultsWrapper.style.display = "block";
+            }
+
+            setStatusMessage("Showing nearby clubs sorted by distance.");
+        });
     }
 
     function performSearch(params) {
