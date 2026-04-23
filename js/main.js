@@ -849,7 +849,7 @@
 
                 createResultsCard(place, photoUrl);
                 createResultMarker(place);
-                appendCarouselSlide(place, photoUrl, index);
+                appendCarouselSlide(place, photoUrl, index, distanceMiles, links);
             });
 
             setStatusMessage("Found " + Math.min(results.length, 12) + " clubs near you.");
