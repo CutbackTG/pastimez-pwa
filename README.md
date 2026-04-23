@@ -6,7 +6,7 @@ Project Two: Pastimez hobby finder
 
 # Project Description
 
-A javaScript powered site using Google maps API to allow users to locate local hobby groups and clubs near them.
+A javaScript progressive web app (PWA) using Google maps API to allow users to locate local hobby groups and clubs near them.
 
 # Website Purpose
 

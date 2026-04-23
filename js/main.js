@@ -1,6 +1,80 @@
 /*jslint browser, for */
 /*global google, bootstrap, console */
 
+let deferredInstallPrompt = null;
+
+const installBtn = document.getElementById("installBtn");
+const networkBanner = document.getElementById("network-banner");
+
+function updateNetworkBanner() {
+  if (!networkBanner) return;
+
+  if (navigator.onLine) {
+    networkBanner.classList.add("hidden");
+    networkBanner.textContent = "You’re back online.";
+  } else {
+    networkBanner.textContent = "You’re offline. Live map and club results may be limited.";
+    networkBanner.classList.remove("hidden");
+  }
+}
+
+window.addEventListener("online", () => {
+  updateNetworkBanner();
+
+  // Optional tiny flourish: briefly show "back online"
+  if (networkBanner) {
+    networkBanner.textContent = "You’re back online.";
+    networkBanner.classList.remove("hidden");
+    setTimeout(() => {
+      if (navigator.onLine) {
+        networkBanner.classList.add("hidden");
+      }
+    }, 2500);
+  }
+});
+
+window.addEventListener("offline", () => {
+  updateNetworkBanner();
+});
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+
+  if (installBtn) {
+    installBtn.classList.remove("hidden");
+  }
+});
+
+if (installBtn) {
+  installBtn.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+
+    deferredInstallPrompt.prompt();
+
+    try {
+      const choiceResult = await deferredInstallPrompt.userChoice;
+      console.log("Install prompt result:", choiceResult.outcome);
+    } catch (error) {
+      console.error("Install prompt error:", error);
+    }
+
+    deferredInstallPrompt = null;
+    installBtn.classList.add("hidden");
+  });
+}
+
+window.addEventListener("appinstalled", () => {
+  console.log("Pastimez was installed");
+  if (installBtn) {
+    installBtn.classList.add("hidden");
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  updateNetworkBanner();
+});
+
 (function () {
     "use strict";
 
