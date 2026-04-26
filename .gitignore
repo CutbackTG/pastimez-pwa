@@ -19,3 +19,8 @@ dist/
 *.keystore
 local.properties
 .gradle/
+
+# Wrangler (Cloudflare Workers)
+node_modules/
+.wrangler/
+dist/
