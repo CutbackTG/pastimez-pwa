@@ -73,6 +73,7 @@
 
     window.addEventListener("appinstalled", function () {
         console.log("Pastimez was installed");
+
         if (installBtn) {
             installBtn.classList.add("hidden");
         }
@@ -172,6 +173,7 @@
 
     function scrollToElement(element, offset) {
         var elementTop = element.offsetTop - (offset || 100);
+
         window.scrollTo({
             top: elementTop,
             behavior: "smooth"
@@ -183,6 +185,7 @@
 
         if (collapse && !collapse.classList.contains("show")) {
             new bootstrap.Collapse(collapse, { show: true });
+
             window.setTimeout(function () {
                 scrollToElement(item);
             }, 300);
@@ -198,6 +201,7 @@
         }
 
         existing = input.parentElement.querySelector(".error-message");
+
         if (existing) {
             return;
         }
@@ -205,6 +209,7 @@
         err = document.createElement("div");
         err.className = "error-message text-danger small mt-1";
         err.textContent = message;
+
         input.parentElement.appendChild(err);
     }
 
@@ -227,6 +232,20 @@
                 networkBanner.classList.add("hidden");
             }
         }, 2500);
+    }
+
+    function safeComputeDistance(fromLatLng, toLatLng) {
+        if (
+            google &&
+            google.maps &&
+            google.maps.geometry &&
+            google.maps.geometry.spherical &&
+            typeof google.maps.geometry.spherical.computeDistanceBetween === "function"
+        ) {
+            return google.maps.geometry.spherical.computeDistanceBetween(fromLatLng, toLatLng);
+        }
+
+        return 0;
     }
 
     // =========================================================
@@ -293,7 +312,9 @@
             var address = document.createElement("p");
 
             col.className = "col";
+
             card.className = "card h-100 shadow-sm";
+
             img.className = "card-img-top";
             img.style.objectFit = "cover";
             img.style.height = "200px";
@@ -301,6 +322,7 @@
             img.alt = place.name;
 
             body.className = "card-body";
+
             title.className = "card-title";
             title.textContent = place.name;
 
@@ -309,23 +331,13 @@
 
             body.appendChild(title);
             body.appendChild(address);
+
             card.appendChild(img);
             card.appendChild(body);
+
             col.appendChild(card);
             container.appendChild(col);
         });
-    }
-
-    function safeComputeDistance(fromLatLng, toLatLng) {
-        if (google &&
-            google.maps &&
-            google.maps.geometry &&
-            google.maps.geometry.spherical &&
-            typeof google.maps.geometry.spherical.computeDistanceBetween === "function") {
-            return google.maps.geometry.spherical.computeDistanceBetween(fromLatLng, toLatLng);
-        }
-
-        return 0;
     }
 
     function loadDiscoverResults(location) {
@@ -338,6 +350,7 @@
         }
 
         service = new google.maps.places.PlacesService(map);
+
         request = {
             location: new google.maps.LatLng(location.lat, location.lng),
             radius: 16093,
@@ -359,6 +372,7 @@
             results.sort(function (a, b) {
                 var d1 = safeComputeDistance(userLatLng, a.geometry.location);
                 var d2 = safeComputeDistance(userLatLng, b.geometry.location);
+
                 return d1 - d2;
             });
 
@@ -428,6 +442,7 @@
 
         if (userMarker) {
             userMarker.setMap(null);
+
             markers = markers.filter(function (marker) {
                 return marker !== userMarker;
             });
@@ -444,7 +459,9 @@
         });
 
         markers.push(userMarker);
+
         loadNearbyClubs(userLocation);
+        loadDiscoverResults(userLocation);
     }
 
     // =========================================================
@@ -469,9 +486,11 @@
         if (isHobbyComplete && accordionItems[1]) {
             openAccordion(accordionItems[1]);
         }
+
         if (isLocationComplete && accordionItems[2]) {
             openAccordion(accordionItems[2]);
         }
+
         if (isDistanceComplete && accordionItems[3]) {
             openAccordion(accordionItems[3]);
         }
@@ -482,9 +501,11 @@
             if (params.preference === "indoor") {
                 return params.hobby + " indoor club";
             }
+
             if (params.preference === "outdoor") {
                 return params.hobby + " outdoor club";
             }
+
             return params.hobby + " club";
         }
 
@@ -548,6 +569,7 @@
             websiteLink.textContent = "Visit website";
             websiteLink.style.display = "inline-block";
             websiteLink.style.marginRight = "12px";
+
             body.appendChild(websiteLink);
         }
 
@@ -558,10 +580,12 @@
         mapsLink.target = "_blank";
         mapsLink.rel = "noopener";
         mapsLink.textContent = "View on Google Maps";
+
         body.appendChild(mapsLink);
 
         card.appendChild(img);
         card.appendChild(body);
+
         col.appendChild(card);
         hobbyContainer.appendChild(col);
     }
@@ -611,6 +635,7 @@
         var distance;
         var websiteLink;
         var mapsLink;
+        var noSite;
 
         if (!carouselInner) {
             return;
@@ -639,7 +664,9 @@
         address.textContent = place.vicinity || place.formatted_address || "";
 
         distance = document.createElement("p");
-        distance.textContent = distanceMiles + " miles away";
+        distance.textContent = distanceMiles
+            ? distanceMiles + " miles away"
+            : "Distance unavailable";
         distance.style.fontWeight = "600";
         distance.style.color = "#6a1b9a";
         distance.style.marginBottom = "8px";
@@ -649,7 +676,7 @@
         content.appendChild(distance);
 
         if (links && links.website) {
-            var websiteLink = document.createElement("a");
+            websiteLink = document.createElement("a");
             websiteLink.href = links.website;
             websiteLink.target = "_blank";
             websiteLink.rel = "noopener";
@@ -659,7 +686,7 @@
 
             content.appendChild(websiteLink);
         } else {
-            var noSite = document.createElement("p");
+            noSite = document.createElement("p");
             noSite.textContent = "No website available";
             noSite.style.fontSize = "0.85rem";
             noSite.style.color = "#777";
@@ -668,7 +695,7 @@
             content.appendChild(noSite);
         }
 
-        var mapsLink = document.createElement("a");
+        mapsLink = document.createElement("a");
         mapsLink.href = (links && links.googleMapsUrl)
             ? links.googleMapsUrl
             : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(place.name);
@@ -682,6 +709,7 @@
         wrapper.appendChild(imageWrap);
         wrapper.appendChild(content);
         item.appendChild(wrapper);
+
         carouselInner.appendChild(item);
     }
 
@@ -695,9 +723,10 @@
         }
 
         service = new google.maps.places.PlacesService(map);
+
         request = {
             placeId: place.place_id,
-            fields: ["name", "website", "url"]
+            fields: ["website", "url"]
         };
 
         service.getDetails(request, function (details, status) {
@@ -724,9 +753,10 @@
         }
 
         service = new google.maps.places.PlacesService(map);
+
         request = {
             location: new google.maps.LatLng(location.lat, location.lng),
-            radius: 16093, // about 10 miles
+            radius: 16093,
             keyword: "club"
         };
 
@@ -764,11 +794,14 @@
             });
 
             results.slice(0, 10).forEach(function (place, index) {
-                var photoUrl = (place.photos && place.photos.length)
+                var photoUrl;
+                var distanceMiles;
+
+                photoUrl = (place.photos && place.photos.length)
                     ? place.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 })
                     : "https://via.placeholder.com/300x200?text=No+Image";
 
-                var distanceMiles = (
+                distanceMiles = (
                     safeComputeDistance(userLatLng, place.geometry.location) / 1609.34
                 ).toFixed(1);
 
@@ -809,6 +842,7 @@
         keyword = buildKeyword(params);
 
         service = new google.maps.places.PlacesService(map);
+
         request = {
             location: new google.maps.LatLng(userLocation.lat, userLocation.lng),
             radius: radiusMeters,
@@ -823,6 +857,7 @@
         if (carouselInner) {
             carouselInner.innerHTML = "";
         }
+
         if (resultsContainer) {
             resultsContainer.innerHTML = "";
         }
@@ -843,13 +878,23 @@
             });
 
             results.slice(0, 12).forEach(function (place, index) {
-                var photoUrl = (place.photos && place.photos.length)
+                var photoUrl;
+                var distanceMiles;
+
+                photoUrl = (place.photos && place.photos.length)
                     ? place.photos[0].getUrl({ maxWidth: 300, maxHeight: 200 })
                     : "https://via.placeholder.com/300x200?text=No+Image";
 
-                createResultsCard(place, photoUrl);
+                distanceMiles = (
+                    safeComputeDistance(userLatLng, place.geometry.location) / 1609.34
+                ).toFixed(1);
+
                 createResultMarker(place);
-                appendCarouselSlide(place, photoUrl, index, distanceMiles, links);
+
+                fetchPlaceWebsite(place, function (links) {
+                    createResultsCard(place, photoUrl, links);
+                    appendCarouselSlide(place, photoUrl, index, distanceMiles, links);
+                });
             });
 
             setStatusMessage("Found " + Math.min(results.length, 12) + " clubs near you.");
@@ -869,12 +914,15 @@
         if (tagContainer) {
             INTERESTS.forEach(function (interest) {
                 var tag = document.createElement("span");
+
                 tag.className = "interest-tag tag active";
                 tag.textContent = interest;
+
                 tag.addEventListener("click", function () {
                     tag.classList.toggle("active");
                     renderDiscoverResults();
                 });
+
                 tagContainer.appendChild(tag);
             });
         }
@@ -887,6 +935,7 @@
 
         ["hobbyInput", "categorySelect", "radius", "indoorOutdoor", "manualLocation"].forEach(function (id) {
             var el = getElement(id);
+
             if (el) {
                 el.addEventListener("input", checkAndOpenNext);
                 el.addEventListener("change", checkAndOpenNext);
@@ -968,9 +1017,11 @@
                 manualLocationBtn.textContent = "Setting location...";
 
                 geocoder = new google.maps.Geocoder();
+
                 geocoder.geocode({ address: address }, function (results, status) {
                     if (status === "OK" && results[0]) {
                         var locationData = results[0].geometry.location;
+
                         setUserLocation(locationData.lat(), locationData.lng(), "Your chosen location");
                         checkAndOpenNext();
                         setStatusMessage("Location set to: " + results[0].formatted_address);
