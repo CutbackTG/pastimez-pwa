@@ -178,22 +178,11 @@
         }
     }
 
-    function scrollToElement(element, offset) {
-        window.scrollTo({
-            top: element.offsetTop - (offset || 100),
-            behavior: "smooth"
-        });
-    }
-
     function openAccordion(item) {
         var collapse = item.querySelector(".accordion-collapse");
 
         if (collapse && !collapse.classList.contains("show")) {
             new bootstrap.Collapse(collapse, { show: true });
-
-            window.setTimeout(function () {
-                scrollToElement(item);
-            }, 300);
         }
     }
 
