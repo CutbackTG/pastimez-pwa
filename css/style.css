@@ -878,3 +878,9 @@ button[type="submit"]:hover,
   border: 1px solid #6a1b9a;
   color: #6a1b9a;
 }
+
+.search-submit-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0 3rem;
+}
