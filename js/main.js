@@ -4,12 +4,27 @@
 (function () {
     "use strict";
 
-    // =========================================================
-    // PWA / App UI
-    // =========================================================
     var deferredInstallPrompt = null;
     var installBtn = document.getElementById("installBtn");
     var networkBanner = document.getElementById("network-banner");
+
+    var MAX_DISCOVER = 12;
+    var INTERESTS = ["Creative", "Tech", "Physical", "Social", "Nature", "Relaxing"];
+    var BASE_PURPLE = "#6a1b9a";
+    var DEFAULT_LOCATION = { lat: 50.266, lng: -5.052 };
+
+    var map = null;
+    var markers = [];
+    var userLocation = null;
+    var userMarker = null;
+    var activeInfoWindow = null;
+    var discoverResults = [];
+    var mapReady = false;
+    var hasUserSearched = false;
+
+    function getElement(id) {
+        return document.getElementById(id);
+    }
 
     function updateNetworkBanner() {
         if (!networkBanner) {
@@ -23,6 +38,21 @@
             networkBanner.textContent = "You’re offline. Live map and club results may be limited.";
             networkBanner.classList.remove("hidden");
         }
+    }
+
+    function setStatusMessage(message) {
+        if (!networkBanner) {
+            return;
+        }
+
+        networkBanner.textContent = message;
+        networkBanner.classList.remove("hidden");
+
+        window.setTimeout(function () {
+            if (navigator.onLine && networkBanner.textContent === message) {
+                networkBanner.classList.add("hidden");
+            }
+        }, 2500);
     }
 
     window.addEventListener("online", function () {
@@ -78,30 +108,6 @@
             installBtn.classList.add("hidden");
         }
     });
-
-    // =========================================================
-    // App Constants / State
-    // =========================================================
-    var MAX_DISCOVER = 12;
-    var INTERESTS = ["Creative", "Tech", "Physical", "Social", "Nature", "Relaxing"];
-    var BASE_PURPLE = "#6a1b9a";
-    var DEFAULT_LOCATION = { lat: 50.266, lng: -5.052 };
-
-    var map = null;
-    var markers = [];
-    var userLocation = null;
-    var userMarker = null;
-    var activeInfoWindow = null;
-    var discoverResults = [];
-    var mapReady = false;
-    var hasUserSearched = false;
-
-    // =========================================================
-    // Helpers
-    // =========================================================
-    function getElement(id) {
-        return document.getElementById(id);
-    }
 
     function clearMarkers() {
         markers.forEach(function (marker) {
@@ -173,10 +179,8 @@
     }
 
     function scrollToElement(element, offset) {
-        var elementTop = element.offsetTop - (offset || 100);
-
         window.scrollTo({
-            top: elementTop,
+            top: element.offsetTop - (offset || 100),
             behavior: "smooth"
         });
     }
@@ -194,16 +198,9 @@
     }
 
     function showError(input, message) {
-        var existing;
         var err;
 
-        if (!input || !input.parentElement) {
-            return;
-        }
-
-        existing = input.parentElement.querySelector(".error-message");
-
-        if (existing) {
+        if (!input || !input.parentElement || input.parentElement.querySelector(".error-message")) {
             return;
         }
 
@@ -220,21 +217,6 @@
         });
     }
 
-    function setStatusMessage(message) {
-        if (!networkBanner) {
-            return;
-        }
-
-        networkBanner.textContent = message;
-        networkBanner.classList.remove("hidden");
-
-        window.setTimeout(function () {
-            if (navigator.onLine && networkBanner.textContent === message) {
-                networkBanner.classList.add("hidden");
-            }
-        }, 2500);
-    }
-
     function safeComputeDistance(fromLatLng, toLatLng) {
         if (
             google &&
@@ -249,9 +231,6 @@
         return 0;
     }
 
-    // =========================================================
-    // Discover Helpers
-    // =========================================================
     function mapPlaceToTags(place) {
         var text = (place.name + " " + ((place.types || []).join(" "))).toLowerCase();
         var tags = [];
@@ -331,10 +310,8 @@
 
             body.appendChild(title);
             body.appendChild(address);
-
             card.appendChild(img);
             card.appendChild(body);
-
             col.appendChild(card);
             container.appendChild(col);
         });
@@ -361,7 +338,6 @@
             var userLatLng;
 
             if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
-                console.warn("No default discover results found:", status);
                 discoverResults = [];
                 renderDiscoverResults();
                 return;
@@ -370,10 +346,8 @@
             userLatLng = new google.maps.LatLng(location.lat, location.lng);
 
             results.sort(function (a, b) {
-                var d1 = safeComputeDistance(userLatLng, a.geometry.location);
-                var d2 = safeComputeDistance(userLatLng, b.geometry.location);
-
-                return d1 - d2;
+                return safeComputeDistance(userLatLng, a.geometry.location) -
+                    safeComputeDistance(userLatLng, b.geometry.location);
             });
 
             discoverResults = results.slice(0, MAX_DISCOVER).map(function (result) {
@@ -391,9 +365,6 @@
         });
     }
 
-    // =========================================================
-    // Map
-    // =========================================================
     function initMap() {
         var mapElement = getElement("map");
 
@@ -432,10 +403,7 @@
             return;
         }
 
-        userLocation = {
-            lat: lat,
-            lng: lng
-        };
+        userLocation = { lat: lat, lng: lng };
 
         map.setCenter(userLocation);
         map.setZoom(12);
@@ -464,20 +432,15 @@
         loadDiscoverResults(userLocation);
     }
 
-    // =========================================================
-    // Search Flow
-    // =========================================================
     function checkAndOpenNext() {
         var hobbyInput = getElement("hobbyInput");
         var radiusInput = getElement("radius");
-        var indoorOutdoor = getElement("indoorOutdoor");
         var manualLocationInput = getElement("manualLocation");
         var accordionItems = document.querySelectorAll(".accordion-item");
 
         var hobbyValue = hobbyInput ? hobbyInput.value.trim() : "";
         var locationValue = manualLocationInput ? manualLocationInput.value.trim() : "";
         var radiusValue = radiusInput ? radiusInput.value.trim() : "";
-        var preferenceValue = indoorOutdoor ? indoorOutdoor.value : "";
 
         if ((userLocation || locationValue) && accordionItems[1]) {
             openAccordion(accordionItems[1]);
@@ -487,12 +450,8 @@
             openAccordion(accordionItems[2]);
         }
 
-        if (preferenceValue && accordionItems[3]) {
-            openAccordion(accordionItems[3]);
-        }
-
-        if (radiusValue && accordionItems[3]) {
-            openAccordion(accordionItems[3]);
+        if (radiusValue && accordionItems[2]) {
+            openAccordion(accordionItems[2]);
         }
     }
 
@@ -501,14 +460,6 @@
 
         if (!hobby) {
             return "hobby club";
-        }
-
-        if (params.preference === "indoor") {
-            return hobby + " indoor club";
-        }
-
-        if (params.preference === "outdoor") {
-            return hobby + " outdoor club";
         }
 
         return hobby + " club";
@@ -580,7 +531,6 @@
 
         card.appendChild(img);
         card.appendChild(body);
-
         col.appendChild(card);
         hobbyContainer.appendChild(col);
     }
@@ -704,7 +654,6 @@
         wrapper.appendChild(imageWrap);
         wrapper.appendChild(content);
         item.appendChild(wrapper);
-
         carouselInner.appendChild(item);
     }
 
@@ -767,9 +716,11 @@
         service.nearbySearch(request, function (results, status) {
             var userLatLng;
 
-            if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
-                console.warn("No nearby clubs found:", status);
+            if (hasUserSearched) {
+                return;
+            }
 
+            if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
                 if (carouselInner) {
                     carouselInner.innerHTML =
                         '<div class="carousel-item active">' +
@@ -838,6 +789,8 @@
         radiusMeters = params.radiusMiles * 1609.34;
         keyword = buildKeyword(params);
 
+        console.log("Search keyword:", keyword);
+
         service = new google.maps.places.PlacesService(map);
 
         request = {
@@ -862,10 +815,6 @@
 
         service.nearbySearch(request, function (results, status) {
             var userLatLng;
-
-            if (hasUserSearched) {
-                return;
-            }
 
             if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
                 window.alert("No results found.");
@@ -903,9 +852,6 @@
         });
     }
 
-    // =========================================================
-    // DOM Setup
-    // =========================================================
     document.addEventListener("DOMContentLoaded", function () {
         var tagContainer = getElement("interest-tags");
         var searchForm = getElement("searchForm");
@@ -935,7 +881,7 @@
             styleAccordionItem(item, BASE_PURPLE, "#ffffff");
         });
 
-        ["hobbyInput", "radius", "indoorOutdoor", "manualLocation"].forEach(function (id) {
+        ["hobbyInput", "radius", "manualLocation"].forEach(function (id) {
             var el = getElement(id);
 
             if (el) {
@@ -947,11 +893,9 @@
         if (searchForm) {
             searchForm.addEventListener("submit", function (e) {
                 var hobbyInput = getElement("hobbyInput");
-                var indoorOutdoor = getElement("indoorOutdoor");
                 var radiusInput = getElement("radius");
 
                 var hobby;
-                var preference;
                 var radiusVal;
                 var radiusMiles;
                 var valid = true;
@@ -960,16 +904,10 @@
                 clearErrors();
 
                 hobby = hobbyInput ? hobbyInput.value.trim() : "";
-                preference = indoorOutdoor ? indoorOutdoor.value : "";
                 radiusVal = radiusInput ? radiusInput.value.trim() : "";
 
                 if (!hobby) {
                     showError(hobbyInput, "Enter a hobby or interest.");
-                    valid = false;
-                }
-
-                if (!preference) {
-                    showError(indoorOutdoor, "Select indoor or outdoor preference.");
                     valid = false;
                 }
 
@@ -986,7 +924,6 @@
 
                 performSearch({
                     hobby: hobby,
-                    preference: preference,
                     radiusMiles: radiusMiles
                 });
             });
@@ -1034,8 +971,5 @@
         }
     });
 
-    // =========================================================
-    // Expose initMap for Google callback
-    // =========================================================
     window.initMap = initMap;
 }());
