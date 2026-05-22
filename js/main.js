@@ -94,6 +94,7 @@
     var activeInfoWindow = null;
     var discoverResults = [];
     var mapReady = false;
+    var hasUserSearched = false;
 
     // =========================================================
     // Helpers
@@ -496,19 +497,21 @@
     }
 
     function buildKeyword(params) {
-        if (params.hobby) {
-            if (params.preference === "indoor") {
-                return params.hobby + " indoor club";
-            }
+        var hobby = params.hobby ? params.hobby.trim() : "";
 
-            if (params.preference === "outdoor") {
-                return params.hobby + " outdoor club";
-            }
-
-            return params.hobby + " club";
+        if (!hobby) {
+            return "hobby club";
         }
 
-        return "hobby club";
+        if (params.preference === "indoor") {
+            return hobby + " indoor club";
+        }
+
+        if (params.preference === "outdoor") {
+            return hobby + " outdoor club";
+        }
+
+        return hobby + " club";
     }
 
     function createResultsCard(place, photoUrl, links) {
@@ -820,6 +823,8 @@
         var carouselInner;
         var resultsContainer;
 
+        hasUserSearched = true;
+
         if (!userLocation) {
             window.alert("Please set your location first.");
             return;
@@ -838,7 +843,8 @@
         request = {
             location: new google.maps.LatLng(userLocation.lat, userLocation.lng),
             radius: radiusMeters,
-            keyword: keyword
+            keyword: keyword,
+            type: "point_of_interest"
         };
 
         clearMarkers();
@@ -856,6 +862,10 @@
 
         service.nearbySearch(request, function (results, status) {
             var userLatLng;
+
+            if (hasUserSearched) {
+                return;
+            }
 
             if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
                 window.alert("No results found.");
