@@ -312,7 +312,6 @@
             var address = document.createElement("p");
 
             col.className = "col";
-
             card.className = "card h-100 shadow-sm";
 
             img.className = "card-img-top";
@@ -469,29 +468,29 @@
     // =========================================================
     function checkAndOpenNext() {
         var hobbyInput = getElement("hobbyInput");
-        var categorySelect = getElement("categorySelect");
         var radiusInput = getElement("radius");
+        var indoorOutdoor = getElement("indoorOutdoor");
         var manualLocationInput = getElement("manualLocation");
         var accordionItems = document.querySelectorAll(".accordion-item");
 
         var hobbyValue = hobbyInput ? hobbyInput.value.trim() : "";
-        var categoryValue = categorySelect ? categorySelect.value : "";
         var locationValue = manualLocationInput ? manualLocationInput.value.trim() : "";
         var radiusValue = radiusInput ? radiusInput.value.trim() : "";
+        var preferenceValue = indoorOutdoor ? indoorOutdoor.value : "";
 
-        var isHobbyComplete = hobbyValue || categoryValue;
-        var isLocationComplete = userLocation || locationValue;
-        var isDistanceComplete = radiusValue;
-
-        if (isHobbyComplete && accordionItems[1]) {
+        if ((userLocation || locationValue) && accordionItems[1]) {
             openAccordion(accordionItems[1]);
         }
 
-        if (isLocationComplete && accordionItems[2]) {
+        if (hobbyValue && accordionItems[2]) {
             openAccordion(accordionItems[2]);
         }
 
-        if (isDistanceComplete && accordionItems[3]) {
+        if (preferenceValue && accordionItems[3]) {
+            openAccordion(accordionItems[3]);
+        }
+
+        if (radiusValue && accordionItems[3]) {
             openAccordion(accordionItems[3]);
         }
     }
@@ -509,14 +508,7 @@
             return params.hobby + " club";
         }
 
-        return {
-            sports: "sports club",
-            crafting: "crafts club",
-            music: "music group",
-            gaming: "gaming club",
-            social: "community group",
-            outdoors: "outdoor adventure club"
-        }[params.category] || "hobby club";
+        return "hobby club";
     }
 
     function createResultsCard(place, photoUrl, links) {
@@ -933,7 +925,7 @@
             styleAccordionItem(item, BASE_PURPLE, "#ffffff");
         });
 
-        ["hobbyInput", "categorySelect", "radius", "indoorOutdoor", "manualLocation"].forEach(function (id) {
+        ["hobbyInput", "radius", "indoorOutdoor", "manualLocation"].forEach(function (id) {
             var el = getElement(id);
 
             if (el) {
@@ -945,12 +937,10 @@
         if (searchForm) {
             searchForm.addEventListener("submit", function (e) {
                 var hobbyInput = getElement("hobbyInput");
-                var categorySelect = getElement("categorySelect");
                 var indoorOutdoor = getElement("indoorOutdoor");
                 var radiusInput = getElement("radius");
 
                 var hobby;
-                var category;
                 var preference;
                 var radiusVal;
                 var radiusMiles;
@@ -960,13 +950,11 @@
                 clearErrors();
 
                 hobby = hobbyInput ? hobbyInput.value.trim() : "";
-                category = categorySelect ? categorySelect.value : "";
                 preference = indoorOutdoor ? indoorOutdoor.value : "";
                 radiusVal = radiusInput ? radiusInput.value.trim() : "";
 
-                if (!hobby && !category) {
-                    showError(hobbyInput, "Enter a hobby or select a category.");
-                    showError(categorySelect, "Enter a hobby or select a category.");
+                if (!hobby) {
+                    showError(hobbyInput, "Enter a hobby or interest.");
                     valid = false;
                 }
 
@@ -988,7 +976,6 @@
 
                 performSearch({
                     hobby: hobby,
-                    category: category,
                     preference: preference,
                     radiusMiles: radiusMiles
                 });
